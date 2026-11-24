@@ -1,0 +1,17 @@
+{
+  "name": "E‑Steuerauszug Generator",
+  "short_name": "Steuerauszug",
+  "description": "Erstellt aus dem Kontoauszug einen eCH‑0196‑Steuerauszug (XML und PDF mit Barcode). Läuft lokal im Browser, ohne Upload und ohne Datenspeicherung.",
+  "lang": "de-CH",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f8f9fc",
+  "theme_color": "#f8f9fc",
+  "categories": ["finance", "productivity", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

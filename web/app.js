@@ -454,3 +454,21 @@ function dashboardHtml(s) {
     s.dividenden.top.map((i) => `<tr><td>${esc(i.date)}</td><td title="${esc(i.name)}">${esc(i.name.length > 30 ? i.name.slice(0, 29) + "…" : i.name)}</td><td class=num>${num(i.gross, 2)} ${esc(i.currency)}</td><td class=num>${num(i.net, 2)}</td><td>${i.swiss ? '<span class="tag">CH</span>' : ""}</td></tr>`).join("") + "</tbody></table></div></div>" : "";
   return kpis + summaryCard + cash + charts + div;
 }
+
+// ---- installable web app (PWA) ------------------------------------------------------
+// The service worker caches only the app's own code so it also works offline;
+// user files are never fetched over the network and therefore never cached.
+if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname))) {
+  navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready)
+    .then(() => { $("offlineNote").hidden = false; })
+    .catch(() => { /* app still works online without it */ });
+}
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; $("installBtn").hidden = false; });
+$("installBtn").addEventListener("click", async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null; $("installBtn").hidden = true;
+});
+window.addEventListener("appinstalled", () => { $("installBtn").hidden = true; });

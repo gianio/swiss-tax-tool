@@ -23,8 +23,9 @@
     <p>Der E‑Steuerauszug Generator ist eine Web‑Anwendung, die <strong>vollständig in Ihrem Browser</strong> läuft. Kontoauszüge, CSV‑ und PDF‑Dateien, Ihre Angaben (Name, Kundennummer, Kanton usw.) sowie der erzeugte Steuerauszug werden <strong>ausschliesslich lokal auf Ihrem Gerät</strong> verarbeitet. Sie werden weder an uns noch an Dritte übermittelt, und wir speichern sie nicht.</p>
     <p>Dies ist technisch abgesichert: Eine Content‑Security‑Policy weist Ihren Browser an, der Anwendung keine Verbindungen zu fremden Servern zu erlauben. Sobald Sie den Browser‑Tab schliessen, sind die Daten aus dem Arbeitsspeicher gelöscht.</p>
 
-    <h2>3. Aufruf der Website (Server‑Protokolle)</h2>
-    <p>Beim Laden der Website übermittelt Ihr Browser – wie bei jeder Website – technisch notwendige Angaben an den Server unseres Hosting‑Anbieters [Name des Hosting‑Anbieters, Sitzland]: IP‑Adresse, Datum und Uhrzeit, angeforderte Datei, Browser‑Typ und Betriebssystem. Diese Daten dienen dem sicheren Betrieb der Website, werden nicht mit anderen Daten zusammengeführt und nach [Anzahl] Tagen gelöscht. [Falls der Hosting‑Anbieter Daten ausserhalb der Schweiz/des EWR bearbeitet: Angabe des Landes und der Garantien, z. B. Standardvertragsklauseln.]</p>
+    <h2>3. Aufruf der Website (Hosting auf GitHub Pages)</h2>
+    <p>Die Website wird über <strong>GitHub Pages</strong> ausgeliefert, einen Dienst der GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA. Beim Laden der Seite übermittelt Ihr Browser – wie bei jeder Website – technisch notwendige Angaben an GitHub, insbesondere Ihre IP‑Adresse, Datum und Uhrzeit sowie die angeforderte Datei. GitHub kann diese Daten nach eigenen Angaben zu Sicherheitszwecken protokollieren; wir haben auf diese Protokolle keinen Zugriff. Dabei können Daten in die USA übermittelt werden. Massgebend ist die Datenschutzerklärung von GitHub (docs.github.com, „GitHub General Privacy Statement“). [Rechtsgrundlage / Garantien für die Übermittlung in die USA, z. B. Swiss‑U.S. Data Privacy Framework, durch Rechtsberatung bestätigen lassen.]</p>
+    <p>Ihre Kontoauszüge und Angaben werden dabei <strong>nicht</strong> übertragen – sie verlassen Ihr Gerät zu keinem Zeitpunkt.</p>
 
     <h2>4. Speicherung im Browser (localStorage)</h2>
     <p>Wir setzen <strong>keine Cookies</strong> und speichern Ihre Finanz‑ und Personendaten nicht – weder auf unseren Servern noch in Ihrem Browser. Im lokalen Speicher Ihres Browsers werden nur folgende Einträge abgelegt, die Ihr Gerät nie verlassen:</p>
@@ -32,6 +33,7 @@
       <li>Ihre Zustimmung zu AGB und Datenschutzerklärung (damit der Hinweis nicht bei jedem Besuch erscheint);</li>
             <li>nur wenn Sie es ausdrücklich aktivieren: ein „Bankprofil“ – die Zuordnung von Spaltennamen, keine Transaktionen, Beträge oder Personendaten.</li>
     </ul>
+    <p>Damit die Anwendung auch offline und als installierte App funktioniert, legt Ihr Browser zudem eine Kopie des <strong>Programmcodes</strong> der Anwendung (HTML, JavaScript, Bibliotheken) in seinem Cache ab („Service Worker“). Dieser Cache enthält ausschliesslich Programmdateien, niemals Ihre Dokumente oder Angaben.</p>
     <p>Sie können diese Einträge jederzeit über die Einstellungen Ihres Browsers („Websitedaten löschen“) entfernen.</p>
 
     <h2>5. Kein Tracking, keine Drittinhalte</h2>

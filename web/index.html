@@ -12,6 +12,9 @@
   <title>E‑Steuerauszug Generator – Kontoauszug → eCH‑0196</title>
   <meta name="description" content="Erstellt aus dem Kontoauszug Ihrer Bank einen eCH‑0196‑Steuerauszug (XML und PDF mit Barcode) für die kantonale Steuersoftware. Läuft komplett lokal im Browser.">
   <link rel="stylesheet" href="styles.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Steuerauszug">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%2336618e' d='M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z'/></svg>">
 </head>
 <body>
@@ -24,7 +27,10 @@
           <div class="sub">Kontoauszug → eCH‑0196 · alle Kantone</div>
         </div>
       </div>
-      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel umschalten"><span class="mi mi-dark"></span></button>
+      <div class="appbar-actions">
+        <button class="btn text" id="installBtn" type="button" hidden><span class="mi mi-download"></span>App installieren</button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel umschalten"><span class="mi mi-dark"></span></button>
+      </div>
     </header>
 
     <section class="hero" aria-labelledby="heroTitle">
@@ -182,7 +188,7 @@
     <div id="dashboardHost"></div>
 
     <footer class="app">
-      <div class="foot-privacy"><span class="mi mi-shield"></span>Läuft lokal · Kein Upload · Keine Datenspeicherung · Kein Tracking</div>
+      <div class="foot-privacy"><span class="mi mi-shield"></span>Läuft lokal · Kein Upload · Keine Datenspeicherung · Kein Tracking<span id="offlineNote" hidden> · <span class="mi mi-cloud-off"></span>offline verfügbar</span></div>
       <nav class="legal-links"><a href="agb.html">AGB</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="haftungsausschluss.html">Haftungsausschluss</a> · <a href="impressum.html">Impressum</a> · <a href="lizenzen.html">Lizenzen</a> · <button type="button" class="linkish" id="showConsent">Datenschutz‑Hinweis</button></nav>
       eCH‑0196 v2.2 · Kein Ersatz für Steuerberatung.
     </footer>
