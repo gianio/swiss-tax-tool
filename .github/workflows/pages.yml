@@ -19,11 +19,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  # Build and deploy are separate jobs (as in GitHub's Pages starter
+  # workflow): the deploy job only starts once the artifact upload is fully
+  # finalized, otherwise deploy-pages can report "Found 0 artifact(s)".
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
 
@@ -31,10 +31,12 @@ jobs:
         with:
           node-version: 20
 
-      - name: Smoke test (Swissquote + generic bank CSV → eCH-0196 XML)
+      - name: Smoke test (Swissquote, generic bank, IBKR, Revolut → eCH-0196 XML)
         run: |
           node web/cli.js sample_data/sample_swissquote.csv 2025 GR | grep -q "<taxStatement"
           node web/cli.js sample_data/sample_generic_bank.csv 2025 BE | grep -q 'isin="CH0038863350"'
+          node web/cli.js sample_data/sample_ibkr_activity.csv 2025 ZH | grep -q 'isin="US0378331005"'
+          node web/cli.js sample_data/sample_revolut_trading.csv 2025 ZH | grep -q "<taxStatement"
 
       - name: Build site
         run: |
@@ -52,6 +54,13 @@ jobs:
         with:
           path: _site
 
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
