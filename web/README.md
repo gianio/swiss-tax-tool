@@ -1,4 +1,4 @@
-# Browser‑only app — E‑Steuerauszug Generator (any bank → eCH‑0196)
+# Taxli (taxli.ch) — browser‑only app, any bank → eCH‑0196
 
 The **least‑compliance‑exposure** build: the entire pipeline runs **in the
 visitor's browser**, with **no server**. Your CSV/PDF never leaves your device,
@@ -76,6 +76,18 @@ The app is a **PWA**: `manifest.webmanifest` + `sw.js` make it installable
 iOS) and usable **offline** after the first visit. The service worker caches
 only the app's own files (Pyodide on first barcode use); user files are read
 via the File API and never touch the network or the cache.
+
+### Custom domain taxli.ch
+
+1. Register `taxli.ch` at any .ch registrar.
+2. DNS at the registrar: four `A` records for `taxli.ch` → `185.199.108.153`,
+   `185.199.109.153`, `185.199.110.153`, `185.199.111.153` (GitHub Pages), and a
+   `CNAME` record `www` → `<github-user>.github.io`.
+3. Repository Settings → Pages → Custom domain: `taxli.ch`, then tick
+   **Enforce HTTPS** once the certificate is issued. (With the Actions
+   deployment no `CNAME` file is needed.)
+4. Optional but recommended: verify the domain under your GitHub account
+   settings → Pages, so nobody else can claim it.
 
 ## Try it
 

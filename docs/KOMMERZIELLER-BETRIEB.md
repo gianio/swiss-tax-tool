@@ -54,4 +54,4 @@ Die Code128‑Mustertabelle ist die Normtabelle (ISO/IEC 15417) und wurde gegen 
 - Support‑Kanal und Versionsangabe.
 
 ## 3. Platzhalter in den Rechtstexten
-`[Name / Firma]`, `[Rechtsform]`, `[Adresse]`, `[UID]`, `[E‑Mail]`, `[Domain]`, `[Datum]`, `[Hosting‑Anbieter]`, `[Zahlungsdienstleister]`, `[Sitz/Gerichtsstand]`, MWST‑Status – in `agb.html`, `datenschutz.html`, `haftungsausschluss.html`, `impressum.html` und `config.js` ersetzen. Danach die „Entwurf“-Hinweise entfernen.
+`[Name / Firma]`, `[Rechtsform]`, `[Adresse]`, `[UID]`, `[E‑Mail]`, `[Datum]`, `[Hosting‑Anbieter]`, `[Zahlungsdienstleister]`, `[Sitz/Gerichtsstand]`, MWST‑Status – in `agb.html`, `datenschutz.html`, `haftungsausschluss.html`, `impressum.html` und `config.js` ersetzen. Danach die „Entwurf“-Hinweise entfernen.

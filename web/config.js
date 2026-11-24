@@ -3,7 +3,8 @@
  */
 window.APP_CONFIG = {
   // Shown in the header, legal pages link to it.
-  productName: "E‑Steuerauszug Generator",
+  productName: "Taxli",
+  domain: "taxli.ch",
 
   // Operator / Impressum details — fill in before going public.
   operator: {

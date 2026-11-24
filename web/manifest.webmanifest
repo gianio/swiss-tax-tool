@@ -1,6 +1,6 @@
 {
-  "name": "E‑Steuerauszug Generator",
-  "short_name": "Steuerauszug",
+  "name": "Taxli – Steuerauszug aus dem Kontoauszug",
+  "short_name": "Taxli",
   "description": "Erstellt aus dem Kontoauszug einen eCH‑0196‑Steuerauszug (XML und PDF mit Barcode). Läuft lokal im Browser, ohne Upload und ohne Datenspeicherung.",
   "lang": "de-CH",
   "start_url": "./",

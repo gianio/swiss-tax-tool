@@ -272,7 +272,7 @@ def make_barcodes(xml, file_name, creation_ts):
         orgNr, pageNumber: pageNum + 1, isBarcodePage: true, pageHeightPt: PAGE_H,
       });
       page.drawText(
-        "Selbst erstellt mit dem E-Steuerauszug Generator - kein Dokument der Bank, nicht bank-signiert. Ohne Gewähr, keine Steuerberatung. Bitte vor dem Einreichen prüfen.",
+        "Selbst erstellt mit Taxli (taxli.ch) - kein Dokument der Bank, nicht bank-signiert. Ohne Gewähr, keine Steuerberatung. Bitte vor dem Einreichen prüfen.",
         { x: ML, y: 7 * MM, size: 7, font, color: rgb(0.35, 0.35, 0.35) }
       );
     };
