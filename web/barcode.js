@@ -150,8 +150,9 @@ def make_barcodes(xml, file_name, creation_ts):
   // macro-PDF417 payload — softax's importer likely uses this to recognise
   // a page as an eCH-0196 barcode sheet in the first place. Ported from
   // opensteuerauszug's OneDeeBarCode (render/onedee.py), which in turn uses
-  // reportlab's Code128 encoder — the pattern table below is copied from
-  // reportlab/graphics/barcode/code128.py so the encoding matches exactly
+  // reportlab's Code128 encoder. The pattern table below is the standard
+  // ISO/IEC 15417 Code128 symbol table, cross-checked value by value against
+  // reportlab/graphics/barcode/code128.py so the encoding matches the reference
   // (standard ISO/IEC 15417 Code128 symbol table; letter-encoded widths,
   // uppercase = bar, lowercase = space, A=1..D=4 units).
   const CODE128_PATTERNS = {
@@ -270,6 +271,10 @@ def make_barcodes(xml, file_name, creation_ts):
       drawPageIdentifierBarcode(page, font, {
         orgNr, pageNumber: pageNum + 1, isBarcodePage: true, pageHeightPt: PAGE_H,
       });
+      page.drawText(
+        "Selbst erstellt mit dem E-Steuerauszug Generator - kein Dokument der Bank, nicht bank-signiert. Ohne Gewähr, keine Steuerberatung. Bitte vor dem Einreichen prüfen.",
+        { x: ML, y: 7 * MM, size: 7, font, color: rgb(0.35, 0.35, 0.35) }
+      );
     };
 
     for (let bi = 0; bi < barcodes.length; bi++) {

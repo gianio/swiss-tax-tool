@@ -45,7 +45,7 @@
           <div class="modal">
             <h2 id="payTitle">Steuerauszug herunterladen</h2>
             <p class="hint" style="margin-top:4px">Einmalig <strong>CHF ${price}</strong> für dieses Steuerjahr – XML und PDF mit Barcode.</p>
-            ${demo ? '<div class="banner warn" style="margin:10px 0"><span class="ico">🧪</span><div><strong>Demo-Modus:</strong> es wird keine echte Zahlung ausgelöst.</div></div>' : ""}
+            ${demo ? '<div class="banner warn" style="margin:10px 0"><span class="ico mi mi-info"></span><div><strong>Demo-Modus:</strong> es wird keine echte Zahlung ausgelöst.</div></div>' : ""}
             <ul class="checklist">
               <li>eCH‑0196‑Steuerauszug (XML) für den Import in Ihre kantonale Steuersoftware</li>
               <li>PDF mit Barcode (macro PDF417) zum Scannen</li>
