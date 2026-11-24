@@ -34,6 +34,20 @@ any domain (GitHub Pages, Netlify, S3, …).
 ## Any bank, any canton
 
 - **Swissquote** PDF/CSV is recognised automatically.
+- **Interactive Brokers** Activity Statement, CSV *or* PDF (`ibkr.js`):
+  holder/account, Bestand 01.01. from *Prior Quantity*, stock/ETF trades,
+  dividends matched with their withholding tax, credit interest, ending cash
+  per currency, ISIN/name/type from *Financial Instrument Information*;
+  closing quantities are cross‑checked against *Open Positions*. The PDF
+  (landscape, two‑column dividend/tax tables) yields the same result as the
+  CSV. Forex is ignored; options/futures/bonds produce a warning. Statements
+  not covering 1.1.–31.12. produce a warning.
+- **Revolut** trading, Account Statement PDF *or* CSV export (`revolut.js`):
+  trades with fees + commission (PDF), dividends, year‑end positions with ISIN
+  and cash per currency (PDF). Revolut shows dividends after US withholding
+  tax; USD dividends are grossed up at 15 % (W‑8BEN) and flagged. A multi‑year
+  CSV is cut to the tax year (earlier trades → opening holdings). The CSV has
+  no fees/ISIN, so the PDF is recommended.
 - **Any other bank's CSV/TXT export** goes through `importers.js`: preamble
   lines are skipped, the delimiter/decimal separator/date format are detected,
   columns are auto‑matched by DE/EN/FR header synonyms and transaction types by
