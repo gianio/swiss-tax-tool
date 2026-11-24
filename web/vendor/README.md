@@ -21,4 +21,4 @@ Notes:
 - **`pyodide/`** carries only the core runtime (`pyodide.asm.*`,
   `python_stdlib.zip`, `pyodide-lock.json`); no extra wheels are loaded.
 
-Licence texts ship inside the minified bundles / packages themselves.
+Full licence texts are in `licenses/` and listed on `lizenzen.html` (obligation for commercial distribution).

@@ -12,7 +12,6 @@ const CANTONS = {
   UR: "Uri", VD: "Waadt", VS: "Wallis", ZG: "Zug", ZH: "Zürich",
 };
 const DEFAULT_FX = { USD: "0.80", EUR: "0.93", CAD: "0.58", DKK: "0.125", GBP: "1.08", SEK: "0.083", NOK: "0.080", JPY: "0.0055", XAU: "3400" };
-const CANTON_KEY = "est-canton";
 
 let txns = null, cashBalances = [], account = {}, currencies = [], sourceLabel = "";
 let importSkipped = [];
@@ -22,8 +21,6 @@ let lastXml = null, lastCfg = null;
 const chf = (n) => new Intl.NumberFormat("de-CH", { style: "currency", currency: "CHF", maximumFractionDigits: 2 }).format(n || 0);
 const num = (n, d = 0) => new Intl.NumberFormat("de-CH", { minimumFractionDigits: d, maximumFractionDigits: d }).format(n || 0);
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* ignore */ } };
 
 // ---- chrome ----------------------------------------------------------------
 $("themeToggle").addEventListener("click", () => {
@@ -100,7 +97,7 @@ function openMapping() {
     typeMap: profile ? { ...profile.typeMap } : {},
   };
   $("profileNote").innerHTML = profile
-    ? `<div class="banner info" style="margin-bottom:12px"><span class="ico">★</span><div>Gespeichertes Profil <strong>${esc(profile.name || "Bank")}</strong> angewendet.</div></div>`
+    ? `<div class="banner info" style="margin-bottom:12px"><span class="ico mi mi-star"></span><div>Gespeichertes Profil <strong>${esc(profile.name || "Bank")}</strong> angewendet.</div></div>`
     : "";
   $("profileName").value = profile ? profile.name || "" : "";
   if (profile && profile.decimal) $("m_decimal").value = profile.decimal;
@@ -235,9 +232,8 @@ function setupForm() {
   const y = [...years].sort().reverse()[0] || new Date().getFullYear() - 1;
   const yo = []; for (let yr = Math.max(y + 1, new Date().getFullYear()); yr >= y - 6; yr--) yo.push(yr);
   $("f_year").innerHTML = yo.map((yr) => `<option value="${yr}"${yr === y ? " selected" : ""}>${yr}</option>`).join("");
-  const savedCanton = lsGet(CANTON_KEY);
   $("f_canton").innerHTML = '<option value="">— Kanton wählen —</option>' + Object.entries(CANTONS)
-    .map(([k, v]) => `<option value="${k}"${k === savedCanton ? " selected" : ""}>${k} – ${esc(v)}</option>`).join("");
+    .map(([k, v]) => `<option value="${k}">${k} – ${esc(v)}</option>`).join("");
   if (account.holderName) { const p = account.holderName.split(" "); $("f_first").value = p.slice(0, -1).join(" "); $("f_last").value = p[p.length - 1]; }
   if (account.customerNumber) $("f_client").value = account.customerNumber;
 
@@ -294,7 +290,7 @@ function renderCarryTable(positions) {
     <td title="${esc(p.name)}">${esc(p.name.length > 24 ? p.name.slice(0, 23) + "…" : p.name)}</td>
     <td><input class="cf-valor" value="${esc(p.valor ?? "")}" style="width:92px" placeholder="—"></td>
     <td><input class="cf-qty" value="${esc(p.quantity)}" style="width:78px" placeholder="Bestand"></td></tr>`).join("");
-  $("cfTableHost").innerHTML = '<div class="banner info" style="margin-bottom:8px"><span class="ico">↪</span><div>Anfangsbestand (01.01.) je Titel – aus der Datei vorausgefüllt. Stückzahl/Valor prüfen; leere Bestände werden ignoriert.</div></div>' +
+  $("cfTableHost").innerHTML = '<div class="banner info" style="margin-bottom:8px"><span class="ico mi mi-history"></span><div>Anfangsbestand (01.01.) je Titel – aus der Datei vorausgefüllt. Stückzahl/Valor prüfen; leere Bestände werden ignoriert.</div></div>' +
     '<div class="table-wrap"><table><thead><tr><th>ISIN</th><th>Titel</th><th>Valor</th><th>Bestand 01.01.</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 function collectCarry() {
@@ -316,19 +312,18 @@ $("genBtn").addEventListener("click", () => {
     const problem = validateCfg(cfg);
     showErr("formErr", problem);
     if (problem) return;
-    lsSet(CANTON_KEY, cfg.canton);
     const res = SQCore.classify(txns || [], "CH");
     const out = SQCore.buildXml(res, cfg);
     const sum = SQCore.summarize(res, cfg, cashBalances);
     lastXml = out.xml; lastCfg = cfg;
     const wf = !new DOMParser().parseFromString(out.xml, "application/xml").querySelector("parsererror");
     $("badge").innerHTML = (wf
-      ? `<span class="badge ok">✓ eCH‑0196 v2.2 · Kanton ${esc(cfg.canton)} · ${esc(cfg.taxYear)}</span>`
+      ? `<span class="badge ok"><span class="mi mi-check-circle"></span>eCH‑0196 v2.2 · Kanton ${esc(cfg.canton)} · ${esc(cfg.taxYear)}</span>`
       : '<span class="badge bad">✗ XML‑Fehler</span>')
-      + (out.carriedCount ? ` <span class="badge ok">↪ ${out.carriedCount} aus Vorjahr weitergeführt</span>` : "");
+      + (out.carriedCount ? ` <span class="badge ok"><span class="mi mi-history"></span>${out.carriedCount} aus Vorjahr weitergeführt</span>` : "");
     const warns = res.warnings.concat(importSkipped.filter((s) => s.reason !== "ignoriert").map((s) => `Zeile ${s.line}: ${s.reason}`));
     $("warnHost").innerHTML = warns.length
-      ? `<details class="fold"><summary>⚠ ${warns.length} Hinweis${warns.length > 1 ? "e" : ""} zur Datenqualität</summary><ul class="muted-note">${warns.slice(0, 40).map((w) => `<li>${esc(w)}</li>`).join("")}</ul></details>` : "";
+      ? `<details class="fold"><summary><span class="mi mi-warning"></span>${warns.length} Hinweis${warns.length > 1 ? "e" : ""} zur Datenqualität</summary><ul class="muted-note">${warns.slice(0, 40).map((w) => `<li>${esc(w)}</li>`).join("")}</ul></details>` : "";
     $("priceNote").textContent = SQPay.isLocked()
       ? `Download einmalig CHF ${SQPay.priceChf} · Bezahlung mit TWINT oder Kreditkarte`
       : "Download derzeit kostenlos.";
@@ -354,7 +349,7 @@ $("dlPdfBtn").addEventListener("click", async () => {
   if (!lastXml || !(await unlockOrAbort())) return;
   const btn = $("dlPdfBtn"), orig = btn.textContent; btn.disabled = true;
   const setP = (m) => { $("pdfStatus").textContent = m; };
-  btn.innerHTML = '<span class="spinner"></span> Erzeuge …';
+  btn.innerHTML = '<span class="spinner"></span>Erzeuge …';
   try {
     const idM = lastXml.match(/\bid="([^"]+)"/);
     const y = Number($("f_year").value);
@@ -414,7 +409,7 @@ function previewHtml(cfg, out, res, locked) {
       <tbody>${shown.map(row).join("") || '<tr><td colspan="6" class="muted-note">Keine Wertschriften</td></tr>'}</tbody>
       ${lockedBlock}
     </table>
-    ${locked && hidden ? `<div class="sp-lock">🔒 ${hidden} weitere Position${hidden === 1 ? "" : "en"} im vollständigen Steuerauszug</div>` : (hidden ? `<p class="muted-note">… und ${hidden} weitere</p>` : "")}
+    ${locked && hidden ? `<div class="sp-lock"><span class="mi mi-lock"></span>${hidden} weitere Position${hidden === 1 ? "" : "en"} im vollständigen Steuerauszug</div>` : (hidden ? `<p class="muted-note">… und ${hidden} weitere</p>` : "")}
     </div>
     ${cash.length ? `<div class="sp-sub">Konten</div><div class="table-wrap"><table><thead><tr><th>Konto</th><th class=num>Saldo 31.12.</th></tr></thead><tbody>${cash.map((b, i) =>
       locked && i >= 1 ? `<tr class="masked"><td>${esc(cfg.institution)} •••</td><td class=num>•••••</td></tr>` : `<tr><td>${esc(cfg.institution)} ${esc(b.currency)}</td><td class=num>${num(b.amount, 2)} ${esc(b.currency)}</td></tr>`).join("")}</tbody></table></div>` : ""}
@@ -459,3 +454,21 @@ function dashboardHtml(s) {
     s.dividenden.top.map((i) => `<tr><td>${esc(i.date)}</td><td title="${esc(i.name)}">${esc(i.name.length > 30 ? i.name.slice(0, 29) + "…" : i.name)}</td><td class=num>${num(i.gross, 2)} ${esc(i.currency)}</td><td class=num>${num(i.net, 2)}</td><td>${i.swiss ? '<span class="tag">CH</span>' : ""}</td></tr>`).join("") + "</tbody></table></div></div>" : "";
   return kpis + summaryCard + cash + charts + div;
 }
+
+// ---- installable web app (PWA) ------------------------------------------------------
+// The service worker caches only the app's own code so it also works offline;
+// user files are never fetched over the network and therefore never cached.
+if ("serviceWorker" in navigator && (location.protocol === "https:" || ["localhost", "127.0.0.1"].includes(location.hostname))) {
+  navigator.serviceWorker.register("sw.js").then(() => navigator.serviceWorker.ready)
+    .then(() => { $("offlineNote").hidden = false; })
+    .catch(() => { /* app still works online without it */ });
+}
+let installPrompt = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; $("installBtn").hidden = false; });
+$("installBtn").addEventListener("click", async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null; $("installBtn").hidden = true;
+});
+window.addEventListener("appinstalled", () => { $("installBtn").hidden = true; });

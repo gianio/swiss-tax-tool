@@ -7,14 +7,14 @@
   <meta name="referrer" content="no-referrer">
   <title>Datenschutzerklärung – E‑Steuerauszug Generator</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%2336618e' d='M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z'/></svg>">
 </head>
 <body>
   <div class="wrap legal">
     <p><a href="index.html">← Zurück zur Anwendung</a></p>
     <h1>Datenschutzerklärung</h1>
     <p class="muted-note">Stand: November 2026</p>
-    <div class="banner warn draft"><span class="ico">✎</span><div><strong>Entwurf:</strong> Platzhalter in [eckigen Klammern] ersetzen und vor der Veröffentlichung rechtlich prüfen lassen. Diesen Hinweis danach entfernen.</div></div>
+    <div class="banner warn draft"><span class="ico mi mi-edit"></span><div><strong>Entwurf:</strong> Platzhalter in [eckigen Klammern] ersetzen und vor der Veröffentlichung rechtlich prüfen lassen. Diesen Hinweis danach entfernen.</div></div>
 
     <h2>1. Verantwortliche Stelle</h2>
     <p>[Name / Firma des Betreibers], [Strasse Nr., PLZ Ort, Schweiz], E‑Mail: [kontakt@example.ch] („wir“). Diese Erklärung richtet sich nach dem Schweizer Datenschutzgesetz (DSG) und – soweit anwendbar – nach der EU‑Datenschutz‑Grundverordnung (DSGVO).</p>
@@ -23,16 +23,17 @@
     <p>Der E‑Steuerauszug Generator ist eine Web‑Anwendung, die <strong>vollständig in Ihrem Browser</strong> läuft. Kontoauszüge, CSV‑ und PDF‑Dateien, Ihre Angaben (Name, Kundennummer, Kanton usw.) sowie der erzeugte Steuerauszug werden <strong>ausschliesslich lokal auf Ihrem Gerät</strong> verarbeitet. Sie werden weder an uns noch an Dritte übermittelt, und wir speichern sie nicht.</p>
     <p>Dies ist technisch abgesichert: Eine Content‑Security‑Policy weist Ihren Browser an, der Anwendung keine Verbindungen zu fremden Servern zu erlauben. Sobald Sie den Browser‑Tab schliessen, sind die Daten aus dem Arbeitsspeicher gelöscht.</p>
 
-    <h2>3. Aufruf der Website (Server‑Protokolle)</h2>
-    <p>Beim Laden der Website übermittelt Ihr Browser – wie bei jeder Website – technisch notwendige Angaben an den Server unseres Hosting‑Anbieters [Name des Hosting‑Anbieters, Sitzland]: IP‑Adresse, Datum und Uhrzeit, angeforderte Datei, Browser‑Typ und Betriebssystem. Diese Daten dienen dem sicheren Betrieb der Website, werden nicht mit anderen Daten zusammengeführt und nach [Anzahl] Tagen gelöscht. [Falls der Hosting‑Anbieter Daten ausserhalb der Schweiz/des EWR bearbeitet: Angabe des Landes und der Garantien, z. B. Standardvertragsklauseln.]</p>
+    <h2>3. Aufruf der Website (Hosting auf GitHub Pages)</h2>
+    <p>Die Website wird über <strong>GitHub Pages</strong> ausgeliefert, einen Dienst der GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, USA. Beim Laden der Seite übermittelt Ihr Browser – wie bei jeder Website – technisch notwendige Angaben an GitHub, insbesondere Ihre IP‑Adresse, Datum und Uhrzeit sowie die angeforderte Datei. GitHub kann diese Daten nach eigenen Angaben zu Sicherheitszwecken protokollieren; wir haben auf diese Protokolle keinen Zugriff. Dabei können Daten in die USA übermittelt werden. Massgebend ist die Datenschutzerklärung von GitHub (docs.github.com, „GitHub General Privacy Statement“). [Rechtsgrundlage / Garantien für die Übermittlung in die USA, z. B. Swiss‑U.S. Data Privacy Framework, durch Rechtsberatung bestätigen lassen.]</p>
+    <p>Ihre Kontoauszüge und Angaben werden dabei <strong>nicht</strong> übertragen – sie verlassen Ihr Gerät zu keinem Zeitpunkt.</p>
 
     <h2>4. Speicherung im Browser (localStorage)</h2>
-    <p>Wir setzen <strong>keine Cookies</strong>. Im lokalen Speicher Ihres Browsers werden nur folgende Einträge abgelegt, die Ihr Gerät nie verlassen:</p>
+    <p>Wir setzen <strong>keine Cookies</strong> und speichern Ihre Finanz‑ und Personendaten nicht – weder auf unseren Servern noch in Ihrem Browser. Im lokalen Speicher Ihres Browsers werden nur folgende Einträge abgelegt, die Ihr Gerät nie verlassen:</p>
     <ul>
       <li>Ihre Zustimmung zu AGB und Datenschutzerklärung (damit der Hinweis nicht bei jedem Besuch erscheint);</li>
-      <li>der zuletzt gewählte Wohnkanton;</li>
-      <li>optional gespeicherte „Bankprofile“ – nur die Zuordnung von Spaltennamen, keine Transaktionen oder Beträge.</li>
+            <li>nur wenn Sie es ausdrücklich aktivieren: ein „Bankprofil“ – die Zuordnung von Spaltennamen, keine Transaktionen, Beträge oder Personendaten.</li>
     </ul>
+    <p>Damit die Anwendung auch offline und als installierte App funktioniert, legt Ihr Browser zudem eine Kopie des <strong>Programmcodes</strong> der Anwendung (HTML, JavaScript, Bibliotheken) in seinem Cache ab („Service Worker“). Dieser Cache enthält ausschliesslich Programmdateien, niemals Ihre Dokumente oder Angaben.</p>
     <p>Sie können diese Einträge jederzeit über die Einstellungen Ihres Browsers („Websitedaten löschen“) entfernen.</p>
 
     <h2>5. Kein Tracking, keine Drittinhalte</h2>
@@ -50,7 +51,7 @@
     <h2>9. Änderungen</h2>
     <p>Wir können diese Datenschutzerklärung anpassen. Massgebend ist die jeweils auf dieser Seite veröffentlichte Fassung.</p>
 
-    <p style="margin-top:30px"><a href="agb.html">AGB</a> · <a href="impressum.html">Impressum</a></p>
+    <p style="margin-top:30px"><a href="agb.html">AGB</a> · <a href="haftungsausschluss.html">Haftungsausschluss</a> · <a href="impressum.html">Impressum</a></p>
   </div>
 </body>
 </html>

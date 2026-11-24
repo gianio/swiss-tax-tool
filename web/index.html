@@ -8,27 +8,45 @@
        When activating the paywall, add the verifyUrl origin to connect-src. -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; frame-src 'none'; form-action 'none'; base-uri 'self'">
   <meta name="referrer" content="no-referrer">
+  <meta name="theme-color" content="#f8f9fc">
   <title>E‑Steuerauszug Generator – Kontoauszug → eCH‑0196</title>
   <meta name="description" content="Erstellt aus dem Kontoauszug Ihrer Bank einen eCH‑0196‑Steuerauszug (XML und PDF mit Barcode) für die kantonale Steuersoftware. Läuft komplett lokal im Browser.">
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧾</text></svg>">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Steuerauszug">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='%2336618e' d='M18 17H6v-2h12v2zm0-4H6v-2h12v2zm0-4H6V7h12v2zM3 22l1.5-1.5L6 22l1.5-1.5L9 22l1.5-1.5L12 22l1.5-1.5L15 22l1.5-1.5L18 22l1.5-1.5L21 22V2l-1.5 1.5L18 2l-1.5 1.5L15 2l-1.5 1.5L12 2l-1.5 1.5L9 2 7.5 3.5 6 2 4.5 3.5 3 2v20z'/></svg>">
 </head>
 <body>
   <div class="wrap">
     <header class="app">
       <div class="logo">
-        <div class="mark">eST</div>
+        <div class="mark" aria-hidden="true"><span class="mi mi-receipt"></span></div>
         <div>
           <h1>E‑Steuerauszug Generator</h1>
-          <div class="sub">Kontoauszug → eCH‑0196 · alle Kantone · 100 % lokal im Browser</div>
+          <div class="sub">Kontoauszug → eCH‑0196 · alle Kantone</div>
         </div>
       </div>
-      <button class="theme-toggle" id="themeToggle" type="button">◐ Theme</button>
+      <div class="appbar-actions">
+        <button class="btn text" id="installBtn" type="button" hidden><span class="mi mi-download"></span>App installieren</button>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel umschalten"><span class="mi mi-dark"></span></button>
+      </div>
     </header>
 
-    <div class="banner warn" style="margin:16px 0 0">
-      <span class="ico">⚠️</span>
-      <div><strong>Inoffizielles Hilfsmittel, keine Steuerberatung.</strong> Kein Angebot einer Bank, eines Softwareherstellers oder einer Steuerverwaltung. Angaben ohne Gewähr – prüfen Sie den Steuerauszug vor dem Einreichen. <a href="agb.html">AGB</a></div>
+    <section class="hero" aria-labelledby="heroTitle">
+      <h2 id="heroTitle">Läuft lokal. Ihre Daten bleiben bei Ihnen.</h2>
+      <p>Der Steuerauszug wird vollständig in Ihrem Browser erstellt. Kontoauszüge werden weder hochgeladen noch gespeichert – schliessen Sie den Tab, ist alles weg.</p>
+      <div class="chips" role="list">
+        <span class="chip" role="listitem"><span class="mi mi-devices"></span>Läuft lokal im Browser</span>
+        <span class="chip" role="listitem"><span class="mi mi-cloud-off"></span>Kein Upload</span>
+        <span class="chip" role="listitem"><span class="mi mi-delete"></span>Keine Datenspeicherung</span>
+        <span class="chip" role="listitem"><span class="mi mi-visibility-off"></span>Kein Tracking, keine Cookies</span>
+      </div>
+    </section>
+
+    <div class="banner warn" style="margin:0 0 16px">
+      <span class="ico mi mi-info"></span>
+      <div><strong>Inoffizielles Hilfsmittel, keine Steuerberatung.</strong> Kein Angebot einer Bank, eines Softwareherstellers oder einer Steuerverwaltung. Angaben ohne Gewähr – prüfen Sie den Steuerauszug vor dem Einreichen. <a href="haftungsausschluss.html">Haftungsausschluss</a></div>
     </div>
 
     <ol class="stepper" id="stepper" aria-label="Fortschritt">
@@ -42,18 +60,19 @@
     <section class="card" id="srcCard">
       <h2>1. Kontoauszug einlesen</h2>
       <div class="source-grid">
-        <div class="source"><div class="src-t">Swissquote</div><div class="src-d">Kontoauszug‑PDF oder Transaktions‑CSV – wird automatisch erkannt.</div></div>
-        <div class="source"><div class="src-t">Jede andere Bank</div><div class="src-d">CSV/TXT‑Export aus dem E‑Banking – Spalten werden erkannt und lassen sich zuordnen.</div></div>
-        <div class="source"><div class="src-t">Ohne Export</div><div class="src-d">Bestände, Erträge und Kontostände aus dem Vermögensausweis manuell erfassen.</div></div>
+        <div class="source"><span class="mi mi-receipt"></span><div><div class="src-t">Swissquote</div><div class="src-d">Kontoauszug‑PDF oder Transaktions‑CSV – wird automatisch erkannt.</div></div></div>
+        <div class="source"><span class="mi mi-upload"></span><div><div class="src-t">Jede andere Bank</div><div class="src-d">CSV/TXT‑Export aus dem E‑Banking – Spalten werden erkannt und lassen sich zuordnen.</div></div></div>
+        <div class="source"><span class="mi mi-edit"></span><div><div class="src-t">Ohne Export</div><div class="src-d">Bestände, Erträge und Kontostände aus dem Vermögensausweis manuell erfassen.</div></div></div>
       </div>
       <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Datei auswählen">
+        <div class="dz-ico"><span class="mi mi-upload"></span></div>
         <div class="big">Datei hierher ziehen oder klicken</div>
-        <div class="small"><code>CSV</code>, <code>TXT</code> oder Swissquote‑<code>PDF</code> · wird nur lokal gelesen</div>
+        <div class="small"><code>CSV</code>, <code>TXT</code> oder Swissquote‑<code>PDF</code> · wird nur lokal im Browser gelesen, nicht hochgeladen</div>
         <div class="file" id="fileName" hidden></div>
       </div>
       <input type="file" id="fileInput" accept=".csv,.txt,.tsv,.pdf,text/csv,text/plain,application/pdf">
       <div class="actions" style="margin-top:12px">
-        <button class="btn ghost" id="manualBtn" type="button">✎ Ohne Datei manuell erfassen</button>
+        <button class="btn ghost" id="manualBtn" type="button"><span class="mi mi-edit"></span>Ohne Datei manuell erfassen</button>
       </div>
       <div id="parseStatus" class="muted-note" style="margin-top:8px"></div>
       <div class="error" id="err" hidden></div>
@@ -78,10 +97,10 @@
       <div class="subhead">Vorschau (erste Zeilen)</div>
       <div id="mapPreview"></div>
       <div class="profile-row">
-        <label class="check" style="margin:0"><input type="checkbox" id="saveProfile" checked> Zuordnung für diese Bank in diesem Browser merken</label>
+        <label class="check" style="margin:0"><input type="checkbox" id="saveProfile"><span>Zuordnung für diese Bank in diesem Browser merken <span class="desc">(nur Spaltennamen, keine Beträge)</span></span></label>
         <input id="profileName" placeholder="Name der Bank (optional)" style="max-width:240px">
       </div>
-      <div class="actions"><button class="btn primary" id="mapApply" type="button">Übernehmen →</button></div>
+      <div class="actions"><button class="btn primary" id="mapApply" type="button">Übernehmen<span class="mi mi-arrow"></span></button></div>
     </section>
 
     <!-- STEP 2b: manual entry -->
@@ -93,8 +112,8 @@
         <tbody></tbody>
       </table></div>
       <div class="actions">
-        <button class="btn ghost" id="manualAdd" type="button">+ Zeile</button>
-        <button class="btn primary" id="manualApply" type="button">Übernehmen →</button>
+        <button class="btn ghost" id="manualAdd" type="button"><span class="mi mi-add"></span>Zeile</button>
+        <button class="btn primary" id="manualApply" type="button">Übernehmen<span class="mi mi-arrow"></span></button>
       </div>
     </section>
 
@@ -132,7 +151,7 @@
         <p class="hint">Bereits in Ihrer Steuersoftware erfasste Titel werden weitergeführt statt neu angelegt. Wählen Sie den <strong>Vorjahres‑Steuerauszug (eCH‑0196‑XML, alle Kantone)</strong> oder den <strong>SofTax‑Kontrollausdruck „Wertschriftenverzeichnis“ (PDF)</strong>.</p>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <input type="file" id="cfInput" accept=".xml,.pdf" style="display:none">
-          <button class="btn ghost" id="cfBtn" type="button">Vorjahres‑Datei wählen …</button>
+          <button class="btn ghost" id="cfBtn" type="button"><span class="mi mi-history"></span>Vorjahres‑Datei wählen</button>
           <span id="cfStatus" class="muted-note"></span>
         </div>
         <div id="cfTableHost" style="margin-top:12px"></div>
@@ -146,7 +165,7 @@
 
       <div class="error" id="formErr" hidden></div>
       <div class="actions">
-        <button class="btn primary" id="genBtn" type="button">Steuerauszug erstellen →</button>
+        <button class="btn primary" id="genBtn" type="button">Steuerauszug erstellen<span class="mi mi-arrow"></span></button>
       </div>
     </section>
 
@@ -155,22 +174,23 @@
       <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
         <div><h2 style="margin-bottom:6px">4. Vorschau &amp; Download</h2><div id="badge"></div></div>
         <div class="actions" style="margin-top:0">
-          <button class="btn ghost" id="dlBtn" type="button">⬇ XML</button>
-          <button class="btn primary" id="dlPdfBtn" type="button">⬇ PDF mit Barcode</button>
+          <button class="btn ghost" id="dlBtn" type="button"><span class="mi mi-download"></span>XML</button>
+          <button class="btn primary" id="dlPdfBtn" type="button"><span class="mi mi-download"></span>PDF mit Barcode</button>
         </div>
       </div>
       <div id="priceNote" class="muted-note" style="margin-top:6px"></div>
       <div id="pdfStatus" class="muted-note" style="margin-top:4px"></div>
       <div id="warnHost"></div>
       <div id="previewHost"></div>
-      <div class="banner info" style="margin-top:12px"><span class="ico">ℹ️</span><div>Importieren Sie die <strong>XML</strong> oder das <strong>PDF mit Barcode</strong> in Ihre kantonale Steuersoftware (eCH‑0196‑Import, z.&nbsp;B. SofTax). Der Auszug ist selbst erstellt und <strong>nicht bank‑signiert</strong>; Steuerwerte ergänzt die Software aus der offiziellen Kursliste.</div></div>
+      <div class="banner info" style="margin-top:12px"><span class="ico mi mi-info"></span><div>Importieren Sie die <strong>XML</strong> oder das <strong>PDF mit Barcode</strong> in Ihre kantonale Steuersoftware (eCH‑0196‑Import, z.&nbsp;B. SofTax). Der Auszug ist selbst erstellt und <strong>nicht bank‑signiert</strong>; Steuerwerte ergänzt die Software aus der offiziellen Kursliste.</div></div>
     </section>
 
     <div id="dashboardHost"></div>
 
     <footer class="app">
-      <nav class="legal-links"><a href="agb.html">AGB</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="impressum.html">Impressum</a> · <button type="button" class="linkish" id="showConsent">Datenschutz‑Hinweis</button></nav>
-      100 % Browser · eCH‑0196 v2.2 · Kein Ersatz für Steuerberatung.
+      <div class="foot-privacy"><span class="mi mi-shield"></span>Läuft lokal · Kein Upload · Keine Datenspeicherung · Kein Tracking<span id="offlineNote" hidden> · <span class="mi mi-cloud-off"></span>offline verfügbar</span></div>
+      <nav class="legal-links"><a href="agb.html">AGB</a> · <a href="datenschutz.html">Datenschutz</a> · <a href="haftungsausschluss.html">Haftungsausschluss</a> · <a href="impressum.html">Impressum</a> · <a href="lizenzen.html">Lizenzen</a> · <button type="button" class="linkish" id="showConsent">Datenschutz‑Hinweis</button></nav>
+      eCH‑0196 v2.2 · Kein Ersatz für Steuerberatung.
     </footer>
   </div>
 

@@ -63,6 +63,20 @@ any domain (GitHub Pages, Netlify, S3, …).
 - **Preview**: step 4 renders part of the statement; while locked, rows after
   the first three are masked (not just blurred) until payment.
 
+## Deploy to GitHub Pages (installable, offline web app)
+
+`.github/workflows/pages.yml` publishes `web/` on every push to `main`
+(smoke-tests the core first, injects the commit hash as service-worker cache
+version). One-time setup: **Settings → Pages → Source: GitHub Actions**.
+URL: `https://<user>.github.io/<repo>/` (all paths are relative, so the
+project sub-path works).
+
+The app is a **PWA**: `manifest.webmanifest` + `sw.js` make it installable
+("App installieren" button in Chromium browsers, "Zum Home-Bildschirm" on
+iOS) and usable **offline** after the first visit. The service worker caches
+only the app's own files (Pyodide on first barcode use); user files are read
+via the File API and never touch the network or the cache.
+
 ## Try it
 
 Open `web/index.html`, or serve statically (still 100 % client‑side):
