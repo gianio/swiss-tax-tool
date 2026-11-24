@@ -66,7 +66,7 @@ function useBroker(r, label, again) {
   $("parseStatus").textContent = `✓ ${label}: ${txns.length} Transaktionen, ${cashBalances.length} Kontostände` +
     (importWarnings.length ? ` · ${importWarnings.length} Hinweis${importWarnings.length > 1 ? "e" : ""}` : "");
   goToForm();
-  if (r.year) $("f_year").value = String(r.year);
+  if (r.year && $("f_year").value !== String(r.year)) { $("f_year").value = String(r.year); renderFx(); }
   if (r.institution && !$("f_institution").dataset.touched) $("f_institution").value = r.institution;
 }
 
@@ -267,11 +267,54 @@ function setupForm() {
   const ccyset = new Set((txns || []).map((t) => t.currency).filter((c) => c && c !== "CHF"));
   cashBalances.forEach((b) => { if (b.currency && b.currency !== "CHF") ccyset.add(b.currency); });
   currencies = [...ccyset].sort();
+  renderFx();
+}
+
+// ---- exchange rates: filled in automatically from the bundled SNB data -------
+// (fx-rates.js, refreshed at every deploy). Year-end = SNB end-of-month rate
+// of December; dividends/interest use the SNB monthly average of their month.
+function fxFor(year) {
+  const F = window.SQFX;
+  const y = String(year);
+  if (F && F.yearEnd && F.yearEnd[y]) return { rates: F.yearEnd[y], label: `SNB‑Kurs per 31.12.${y}`, provisional: false };
+  if (F && F.latest && F.latest.month && F.latest.month.slice(0, 4) >= y)
+    return { rates: F.latest.rates, label: `vorläufig: SNB‑Monatsendkurs ${F.latest.month.slice(5)}.${F.latest.month.slice(0, 4)} (Jahresendkurs noch nicht publiziert)`, provisional: true };
+  return { rates: {}, label: "", provisional: false };
+}
+function renderFx() {
+  const year = Number($("f_year").value);
+  const fx = fxFor(year);
+  let manual = 0;
   $("fxGrid").innerHTML = currencies.length
-    ? currencies.map((c) => `<div class="field"><label>1 ${esc(c)} = … CHF</label><input class="fx" data-ccy="${esc(c)}" type="number" step="0.0001" value="${DEFAULT_FX[c] || "1"}"></div>`).join("")
+    ? currencies.map((c) => {
+      const auto = fx.rates[c];
+      if (auto == null) manual++;
+      const v = auto != null ? auto : (DEFAULT_FX[c] || "1");
+      return `<div class="field"><label>1 ${esc(c)} = … CHF ${auto != null ? '<span class="tag">automatisch</span>' : '<span class="tag warn">bitte prüfen</span>'}</label>` +
+        `<input class="fx" data-ccy="${esc(c)}" data-auto="${auto != null ? 1 : ""}" type="number" step="0.0001" value="${v}"></div>`;
+    }).join("")
     : '<p class="muted-note">Alle Beträge in CHF – keine Umrechnung nötig.</p>';
-  $("fxSummary").textContent = currencies.length ? `(${currencies.join(", ")})` : "(nur CHF)";
-  $("fxFold").open = currencies.length > 0;
+  document.querySelectorAll(".fx").forEach((i) => i.addEventListener("input", () => { i.dataset.auto = ""; }));
+  const shown = currencies.map((c) => `${c} ${fx.rates[c] != null ? fx.rates[c] : "?"}`).join(" · ");
+  $("fxSummary").textContent = currencies.length
+    ? (manual ? `(${shown} – ${manual} Kurs${manual > 1 ? "e" : ""} manuell prüfen)` : `(${fx.provisional ? "vorläufig" : "automatisch"}: ${shown})`)
+    : "(nur CHF)";
+  $("fxNote").textContent = currencies.length && fx.label
+    ? `Quelle: ${fx.label}. Dividenden und Zinsen werden mit dem SNB‑Monatsmittel ihres Zahlungsmonats umgerechnet. Die Steuersoftware rechnet Wertschriften mit ISIN ohnehin mit der offiziellen ESTV‑Kursliste. Überschreiben ist möglich.`
+    : "Für dieses Jahr sind keine Kurse hinterlegt – bitte Devisenkurse per 31.12. (ESTV‑Kursliste) eintragen.";
+  // Only open the section when something needs attention.
+  $("fxFold").open = currencies.length > 0 && (manual > 0 || fx.provisional);
+}
+function fxMonthlyFor(year) {
+  const F = window.SQFX, out = {};
+  if (!F || !F.monthly) return out;
+  document.querySelectorAll(".fx").forEach((i) => {
+    const c = i.dataset.ccy, m = F.monthly[c];
+    if (!i.dataset.auto || !m) return; // user override: use the single rate
+    out[c] = {};
+    for (const [k, v] of Object.entries(m)) if (k.startsWith(year + "-")) out[c][k] = v;
+  });
+  return out;
 }
 
 function collectCfg() {
@@ -283,7 +326,7 @@ function collectCfg() {
     clientNumber: $("f_client").value.trim(), taxValueMode: $("f_taxmode").value,
     institution: $("f_institution").value.trim() || "Musterbank AG",
     clearing: $("f_clearing").value.trim() || "00000",
-    fxRates: fx, cashBalances, openingPositions: collectCarry(),
+    fxRates: fx, fxMonthly: fxMonthlyFor(Number($("f_year").value)), cashBalances, openingPositions: collectCarry(),
   };
 }
 function validateCfg(cfg) {
@@ -334,9 +377,11 @@ function collectCarry() {
 
 // ---- generate --------------------------------------------------------------------
 $("f_year").addEventListener("change", () => {
-  if (!reparse) return;
-  const r = reparse(Number($("f_year").value));
-  txns = r.transactions; cashBalances = r.balances; importWarnings = r.warnings || [];
+  if (reparse) {
+    const r = reparse(Number($("f_year").value));
+    txns = r.transactions; cashBalances = r.balances; importWarnings = r.warnings || [];
+  }
+  renderFx();
 });
 
 $("genBtn").addEventListener("click", () => {
@@ -359,7 +404,7 @@ $("genBtn").addEventListener("click", () => {
       ? `<details class="fold"><summary><span class="mi mi-warning"></span>${warns.length} Hinweis${warns.length > 1 ? "e" : ""} zur Datenqualität</summary><ul class="muted-note">${warns.slice(0, 40).map((w) => `<li>${esc(w)}</li>`).join("")}</ul></details>` : "";
     $("priceNote").textContent = SQPay.isLocked()
       ? `Download einmalig CHF ${SQPay.priceChf} · Bezahlung mit TWINT oder Kreditkarte`
-      : "Download derzeit kostenlos.";
+      : (SQPay.isSoft() ? `Testphase: Download kostenlos (später CHF ${SQPay.priceChf} pro Steuerjahr).` : "Download derzeit kostenlos.");
     $("previewHost").innerHTML = previewHtml(cfg, out, res, SQPay.isLocked());
     $("resultCard").hidden = false; setStep(4);
     $("dashboardHost").innerHTML = dashboardHtml(sum);
@@ -368,18 +413,19 @@ $("genBtn").addEventListener("click", () => {
 });
 
 // ---- downloads (behind the optional paywall) -------------------------------------
-async function unlockOrAbort() {
-  const ok = await SQPay.requireUnlock();
-  if (ok && lastCfg) $("previewHost").innerHTML = previewHtml(lastCfg, null, null, false);
-  if (ok) $("priceNote").textContent = SQPay.isLocked() ? "" : "✓ Freigeschaltet";
+async function unlockOrAbort(kind) {
+  const wasLocked = SQPay.isLocked();
+  const ok = await SQPay.requireUnlock(kind);
+  if (ok && wasLocked && lastCfg) $("previewHost").innerHTML = previewHtml(lastCfg, null, null, false);
+  if (ok && wasLocked) $("priceNote").textContent = "✓ Freigeschaltet";
   return ok;
 }
 $("dlBtn").addEventListener("click", async () => {
-  if (!lastXml || !(await unlockOrAbort())) return;
+  if (!lastXml || !(await unlockOrAbort("xml"))) return;
   download(new Blob([lastXml], { type: "application/xml" }), `eCH-0196_${$("f_year").value}.xml`);
 });
 $("dlPdfBtn").addEventListener("click", async () => {
-  if (!lastXml || !(await unlockOrAbort())) return;
+  if (!lastXml || !(await unlockOrAbort("pdf"))) return;
   const btn = $("dlPdfBtn"), orig = btn.textContent; btn.disabled = true;
   const setP = (m) => { $("pdfStatus").textContent = m; };
   btn.innerHTML = '<span class="spinner"></span>Erzeuge …';
@@ -464,28 +510,53 @@ function barChart(rows) {
   }).join("") + "</div>";
 }
 function mini(label, value) { return `<div class="field"><label>${esc(label)}</label><div style="font-size:20px;font-weight:700">${value}</div></div>`; }
+function signedChf(v) {
+  const cls = v > 0.004 ? "perf-pos" : (v < -0.004 ? "perf-neg" : "");
+  return `<span class="${cls}">${v > 0.004 ? "+" : (v < -0.004 ? "−" : "")}${chf(Math.abs(v))}</span>`;
+}
 function dashboardHtml(s) {
   const income = (s.dividenden.grossChf || 0) + (s.bankInterestChf || 0);
+  // 1) What goes into the tax return.
   const kpis = '<div class="kpis" style="margin-bottom:20px">' +
-    kpi("accent-1", "Zugänge (Käufe)", num(s.zugaenge.count), "Volumen " + chf(s.zugaenge.totalChf)) +
-    kpi("accent-2", "Abgänge (Verkäufe)", num(s.abgaenge.count), "Volumen " + chf(s.abgaenge.totalChf)) +
-    kpi("accent-3", "Dividenden & Erträge", chf(income), num(s.dividenden.count) + " Zahlungen") +
-    kpi("accent-4", "Verrechnungssteuer", chf(s.dividenden.swissWhtChf), "rückforderbar (CH)") + "</div>";
-  const summaryCard = '<div class="card"><h2>Übersicht ' + esc(s.taxYear) + '</h2><div class="grid3">' +
+    kpi("accent-1", "Steuerbare Erträge", chf(income), "Dividenden & Zinsen brutto · Einkommen") +
+    kpi("accent-2", "Verrechnungssteuer", chf(s.dividenden.swissWhtChf), "35 % auf CH‑Erträge · rückforderbar") +
+    kpi("accent-3", "Ausländische Quellensteuer", chf(s.dividenden.foreignWhtChf), "teils anrechenbar (DA‑1)") +
+    kpi("accent-4", "Konten per 31.12.", chf(s.cashTotalChf || 0), "Vermögen · plus Wertschriften gem. Kursliste") + "</div>";
+  const summaryCard = '<div class="card"><h2>Steuerrelevant ' + esc(s.taxYear) + '</h2><p class="hint">Diese Werte stehen im Steuerauszug.</p><div class="grid3">' +
     mini("Positionen per 31.12.", num(s.positions.filter((p) => p.closingQty !== 0).length)) +
-    mini("Instrumente", num(s.positions.length)) +
-    mini("Geschätzter Depotwert", chf(s.portfolioChf)) +
     mini("Dividenden brutto", chf(s.dividenden.grossChf)) +
+    mini("Zinsen auf Konten", chf(s.bankInterestChf)) +
+    mini("Verrechnungssteuer (CH)", chf(s.dividenden.swissWhtChf)) +
     mini("Ausländische Quellensteuer", chf(s.dividenden.foreignWhtChf)) +
-    mini("Zinsen auf Konten", chf(s.bankInterestChf)) + "</div></div>";
+    mini("Geschätzter Depotwert", chf(s.portfolioChf)) + "</div></div>";
+  // 2) Performance — for information only, not part of the statement.
+  const pf = s.performance || { realizedChf: 0, unrealizedChf: 0, feesChf: 0, incomeNetChf: 0 };
+  const total = pf.realizedChf + pf.unrealizedChf + pf.incomeNetChf;
+  const rows = s.positions.filter((p) => p.trades || p.perf.incomeNetChf).map((p) => {
+    const tot = p.perf.realizedChf + (p.perf.unrealizedChf || 0) + p.perf.incomeNetChf;
+    return { p, tot };
+  }).sort((a, b) => b.tot - a.tot);
+  const perfCard = '<div class="card"><h2>Performance ' + esc(s.taxYear) + ' <span class="step-meta">nur Info</span></h2>' +
+    '<p class="hint">Private Kapitalgewinne sind in der Schweiz in der Regel steuerfrei und stehen nicht im Steuerauszug. Berechnet mit Durchschnittskosten, nach Gebühren, umgerechnet zum Jahresendkurs.</p>' +
+    '<div class="grid3">' +
+      mini("Realisierte Gewinne/Verluste", signedChf(pf.realizedChf)) +
+      mini("Nicht realisiert (geschätzt)", signedChf(pf.unrealizedChf)) +
+      mini("Dividenden & Erträge netto", signedChf(pf.incomeNetChf)) +
+      mini("Gebühren & Kommissionen", chf(pf.feesChf)) +
+      mini("Gesamt", signedChf(total)) +
+    '</div>' +
+    (pf.incomplete ? '<p class="muted-note">Für Titel, die schon am 01.01. im Depot waren, fehlt der Kaufpreis. Deren Verkäufe sind in der Performance nicht enthalten.</p>' : "") +
+    (rows.length ? '<div class="table-wrap" style="margin-top:10px"><table><thead><tr><th>Titel</th><th class=num>Gekauft</th><th class=num>Verkauft</th><th class=num>Realisiert</th><th class=num>Erträge netto</th><th class=num>Total</th></tr></thead><tbody>' +
+      rows.slice(0, 25).map(({ p, tot }) => `<tr><td title="${esc(p.name)}">${esc(p.name.length > 28 ? p.name.slice(0, 27) + "…" : p.name)}${p.perf.incomplete ? ' <span class="tag">ab 01.01.</span>' : ""}</td><td class=num>${p.perf.buyChf ? chf(p.perf.buyChf) : ""}</td><td class=num>${p.perf.sellChf ? chf(p.perf.sellChf) : ""}</td><td class=num>${signedChf(p.perf.realizedChf)}</td><td class=num>${p.perf.incomeNetChf ? chf(p.perf.incomeNetChf) : ""}</td><td class=num><strong>${signedChf(tot)}</strong></td></tr>`).join("") +
+      "</tbody></table></div>" : "") + "</div>";
   const cash = s.cash && s.cash.length ? '<div class="card"><h2>Kontostände per 31.12.</h2><div class="table-wrap"><table><thead><tr><th>Währung</th><th class=num>Saldo</th><th class=num>Wert CHF</th></tr></thead><tbody>' +
     s.cash.map((b) => `<tr><td>${esc(b.currency)}</td><td class=num>${num(b.amount, 2)} ${esc(b.currency)}</td><td class=num>${chf(b.amountChf)}</td></tr>`).join("") +
     `<tr><td><strong>Total</strong></td><td></td><td class=num><strong>${chf(s.cashTotalChf)}</strong></td></tr></tbody></table></div></div>` : "";
+  const div = s.dividenden.top.length ? '<div class="card"><h2>Dividenden & Erträge</h2><div class="table-wrap"><table><thead><tr><th>Datum</th><th>Titel</th><th class=num>Brutto</th><th class=num>Steuer</th><th class=num>Netto</th><th>CH</th></tr></thead><tbody>' +
+    s.dividenden.top.map((i) => `<tr><td>${esc(i.date)}</td><td title="${esc(i.name)}">${esc(i.name.length > 30 ? i.name.slice(0, 29) + "…" : i.name)}</td><td class=num>${num(i.gross, 2)} ${esc(i.currency)}</td><td class=num>${i.tax ? num(i.tax, 2) : ""}</td><td class=num>${num(i.net, 2)}</td><td>${i.swiss ? '<span class="tag">CH</span>' : ""}</td></tr>`).join("") + "</tbody></table></div></div>" : "";
   const catRows = s.categoryValue.filter((c) => c.valueChf > 0).map((c) => ({ name: catLabel(c.category), value: c.valueChf }));
-  const charts = '<div class="card"><h2>Geschätzter Depotwert nach Kategorie</h2><p class="hint">Nach letztem Transaktionskurs · nur Schätzung</p>' + barChart(catRows) + '</div>';
-  const div = s.dividenden.top.length ? '<div class="card"><h2>Grösste Dividenden & Erträge</h2><div class="table-wrap"><table><thead><tr><th>Datum</th><th>Titel</th><th class=num>Brutto</th><th class=num>Netto</th><th>CH</th></tr></thead><tbody>' +
-    s.dividenden.top.map((i) => `<tr><td>${esc(i.date)}</td><td title="${esc(i.name)}">${esc(i.name.length > 30 ? i.name.slice(0, 29) + "…" : i.name)}</td><td class=num>${num(i.gross, 2)} ${esc(i.currency)}</td><td class=num>${num(i.net, 2)}</td><td>${i.swiss ? '<span class="tag">CH</span>' : ""}</td></tr>`).join("") + "</tbody></table></div></div>" : "";
-  return kpis + summaryCard + cash + charts + div;
+  const charts = catRows.length ? '<div class="card"><h2>Depot nach Kategorie</h2><p class="hint">Nach letztem Transaktionskurs · nur Schätzung</p>' + barChart(catRows) + '</div>' : "";
+  return kpis + summaryCard + div + cash + perfCard + charts;
 }
 
 // ---- installable web app (PWA) ------------------------------------------------------

@@ -175,7 +175,7 @@
         const qty = t.quantity || 0;
         const signed = BUY.has(ty) ? qty : -qty;
         inst.movements.push({ date: t.date, dateKey: t.dateKey, row: t.row, type: ty, qty: signed,
-          unitPrice: t.unitPrice, gross: grossFrom(t), currency: t.currency });
+          unitPrice: t.unitPrice, gross: grossFrom(t), costs: t.costs || 0, currency: t.currency });
         continue;
       }
       if (CORP.has(ty)) {
@@ -256,8 +256,17 @@
     return carried;
   }
 
+  // Rate for a payment date: monthly average (cfg.fxMonthly[ccy]["YYYY-MM"],
+  // e.g. SNB) when available, else the single year-end rate.
+  function fxAt(cfg, c, d, rate) {
+    const m = cfg.fxMonthly && cfg.fxMonthly[c];
+    const v = m && d ? m[String(d).slice(0, 7)] : null;
+    return v != null ? Number(v) : rate(c);
+  }
+
   function buildXml(result, cfg) {
     const rate = (c) => (cfg.fxRates && cfg.fxRates[c] != null ? Number(cfg.fxRates[c]) : (c === "CHF" ? 1 : 1));
+    const rateAt = (c, d) => fxAt(cfg, c, d, rate);
     const carriedCount = applyCarryForward(result, cfg.openingPositions);
     const periodFrom = `${cfg.taxYear}-01-01`;
     const periodTo = `${cfg.taxYear}-12-31`;
@@ -302,11 +311,12 @@
       // payments (income)
       const isSwiss = inst.country === "CH";
       for (const inc of inst.income.slice().sort((a, b) => a.row - b.row === 0 ? 0 : b.row - a.row)) {
-        const grossChf = money(inc.gross * r), taxChf = money(inc.tax * r);
+        const pr = rateAt(inc.currency, inc.date);
+        const grossChf = money(inc.gross * pr), taxChf = money(inc.tax * pr);
         let rev = "";
         if (isSwiss) { rev = ` grossRevenueA="${fmt(grossChf)}" withHoldingTaxClaim="${fmt(taxChf)}"`; totA += grossChf; totWht += taxChf; }
         else { rev = ` grossRevenueB="${fmt(grossChf)}"`; totB += grossChf; }
-        children.push(`      <payment paymentDate="${inc.date}" quotationType="PIECE" quantity="1" amountCurrency="${inc.currency}" amountPerUnit="${fmt(money(inc.gross))}" amount="${fmt(money(inc.gross))}" exchangeRate="${fmt(r)}" name="${xmlEsc(inc.type)}"${rev}/>`);
+        children.push(`      <payment paymentDate="${inc.date}" quotationType="PIECE" quantity="1" amountCurrency="${inc.currency}" amountPerUnit="${fmt(money(inc.gross))}" amount="${fmt(money(inc.gross))}" exchangeRate="${fmt(pr)}" name="${xmlEsc(inc.type)}"${rev}/>`);
       }
 
       // stock: opening balance, movements, closing balance
@@ -340,8 +350,9 @@
         const pays = [];
         let aGross = 0;
         for (const inc of (byCcy[c] || [])) {
-          const g = money(inc.gross * r); aGross += g;
-          pays.push(`      <payment paymentDate="${inc.date}" name="Zinsen auf Einlagen" amountCurrency="${c}" amount="${fmt(money(inc.gross))}" exchangeRate="${fmt(r)}" grossRevenueA="${fmt(g)}" grossRevenueB="0" withHoldingTaxClaim="0"/>`);
+          const pr = rateAt(c, inc.date);
+          const g = money(inc.gross * pr); aGross += g;
+          pays.push(`      <payment paymentDate="${inc.date}" name="Zinsen auf Einlagen" amountCurrency="${c}" amount="${fmt(money(inc.gross))}" exchangeRate="${fmt(pr)}" grossRevenueA="${fmt(g)}" grossRevenueB="0" withHoldingTaxClaim="0"/>`);
         }
         bankInterest += aGross;
         let tv = "", accTax = 0;
@@ -393,8 +404,36 @@
   }
 
   // ---- dashboard summary (client-side) -----------------------------------
+  // Simple performance per instrument, in its own currency, average-cost
+  // method. Shares held on 01.01. have no known purchase price: sales of
+  // those are left out and the result is flagged as incomplete.
+  function performanceOf(inst, lastPrice) {
+    let unknown = inst.openingQty > 0 ? inst.openingQty : 0;
+    let pos = 0, cost = 0, realized = 0, fees = 0, bought = 0, sold = 0;
+    const incomplete = unknown > 0;
+    for (const m of chronological(inst.movements)) {
+      const q = Math.abs(m.qty || 0), p = m.unitPrice > 0 ? m.unitPrice : null;
+      fees += m.costs || 0;
+      if (m.qty > 0) {
+        if (p != null) { pos += q; cost += q * p; bought += q * p; }
+      } else if (q) {
+        if (p != null) sold += q * p;
+        const u = Math.min(unknown, q); unknown -= u;
+        const k = q - u;
+        if (k > 0 && pos > 0 && p != null) {
+          const avg = cost / pos, kk = Math.min(k, pos);
+          realized += kk * (p - avg); cost -= avg * kk; pos -= kk;
+        }
+      }
+    }
+    if (pos < 1e-9) { pos = 0; cost = 0; }
+    const unrealized = pos > 0 && lastPrice != null ? pos * lastPrice - cost : (pos > 0 ? null : 0);
+    return { realized: realized - fees, unrealized, fees, bought, sold, incomplete };
+  }
+
   function summarize(result, cfg, cashBalances) {
     const rate = (c) => (cfg.fxRates && cfg.fxRates[c] != null ? Number(cfg.fxRates[c]) : (c === "CHF" ? 1 : 1));
+    const rateAt = (c, d) => fxAt(cfg, c, d, rate);
     let buyN = 0, sellN = 0, buyChf = 0, sellChf = 0;
     let divN = 0, divGrossChf = 0, divNetChf = 0, swissWht = 0, foreignWht = 0;
     const divItems = [];
@@ -411,7 +450,7 @@
       let incChf = 0;
       for (const inc of inst.income) {
         divN++;
-        const r = rate(inc.currency);
+        const r = rateAt(inc.currency, inc.date);
         const g = inc.gross * r;
         divGrossChf += g; divNetChf += inc.net * r; incChf += g;
         if (isSwiss) swissWht += inc.tax * r; else foreignWht += inc.tax * r;
@@ -422,15 +461,27 @@
       for (const m of chronological(inst.movements).reverse()) { if (m.unitPrice > 0) { last = m.unitPrice; break; } }
       const est = (inst.closingQty !== 0 && last != null) ? inst.closingQty * last * rate(inst.currency) : 0;
       catValue[inst.category] = (catValue[inst.category] || 0) + est;
+      const pf = performanceOf(inst, last);
+      const r = rate(inst.currency);
+      const netIncChf = inst.income.reduce((a, x) => a + x.net * rateAt(x.currency, x.date), 0);
       positions.push({ name: inst.name, isin: inst.isin, category: inst.category, currency: inst.currency,
         closingQty: inst.closingQty, openingInferred: inst.openingInferred, carried: !!inst.carried,
-        taxValueChf: est, incomeChf: incChf, trades: inst.movements.length });
+        taxValueChf: est, incomeChf: incChf, trades: inst.movements.length,
+        perf: { realizedChf: pf.realized * r, unrealizedChf: pf.unrealized == null ? null : pf.unrealized * r,
+          feesChf: pf.fees * r, incomeNetChf: netIncChf, incomplete: pf.incomplete,
+          buyChf: pf.bought * r, sellChf: pf.sold * r } });
     }
     divItems.sort((a, b) => b.grossChf - a.grossChf);
+    const perf = { realizedChf: 0, unrealizedChf: 0, feesChf: 0, incomeNetChf: 0, incomplete: false };
+    for (const p of positions) {
+      perf.realizedChf += p.perf.realizedChf; perf.feesChf += p.perf.feesChf; perf.incomeNetChf += p.perf.incomeNetChf;
+      if (p.perf.unrealizedChf != null) perf.unrealizedChf += p.perf.unrealizedChf;
+      if (p.perf.incomplete) perf.incomplete = true;
+    }
     positions.sort((a, b) => b.taxValueChf - a.taxValueChf);
 
     let interestChf = 0;
-    for (const inc of result.cashInterest) interestChf += inc.gross * rate(inc.currency);
+    for (const inc of result.cashInterest) interestChf += inc.gross * rateAt(inc.currency, inc.date);
 
     const cash = [];
     let cashTotal = 0;
@@ -452,6 +503,7 @@
       categoryValue: Object.entries(catValue).map(([c, v]) => ({ category: c, valueChf: v })).sort((a, b) => b.valueChf - a.valueChf),
       cash, cashTotalChf: cashTotal,
       portfolioChf: Object.values(catValue).reduce((a, b) => a + b, 0),
+      performance: perf,
     };
   }
 
