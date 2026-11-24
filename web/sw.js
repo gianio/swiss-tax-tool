@@ -11,7 +11,7 @@
 const VERSION = "__BUILD__";
 const CACHE = "est-" + VERSION;
 const SHELL = [
-  "./", "index.html", "styles.css", "config.js", "app.js", "core.js", "importers.js",
+  "./", "index.html", "styles.css", "config.js", "app.js", "core.js", "importers.js", "ibkr.js", "revolut.js",
   "consent.js", "paywall.js", "pdfparse.js", "carryforward.js", "barcode.js",
   "vendor/pdf.min.js", "vendor/pdf.worker.min.js", "vendor/pdf-lib.min.js",
   "agb.html", "datenschutz.html", "haftungsausschluss.html", "impressum.html", "lizenzen.html",

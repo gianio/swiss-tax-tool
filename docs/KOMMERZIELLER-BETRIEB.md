@@ -22,7 +22,7 @@
 ## 2. Was prüfen
 
 ### Marken & Name
-- „Swissquote“, „SofTax“, „TWINT“ sind fremde Marken: nur **beschreibend** verwenden („liest Swissquote‑Exporte“), **nicht** im Produktnamen, in der Domain oder im Logo.
+- „Swissquote“, „Interactive Brokers“, „Revolut“, „SofTax“, „TWINT“ sind fremde Marken: nur **beschreibend** verwenden („liest Swissquote‑Exporte“), **nicht** im Produktnamen, in der Domain oder im Logo.
 - Das Repository und die Domain sollten **nicht** „swissquote“ enthalten → vor dem Launch umbenennen.
 - Eigenen Produktnamen auf Swissreg (IGE) recherchieren und ggf. als Marke anmelden.
 - TWINT‑ und Kartenlogos nur gemäss den Brand‑Guidelines (bekommt man über den Zahlungsanbieter).
@@ -50,7 +50,7 @@ Die Code128‑Mustertabelle ist die Normtabelle (ISO/IEC 15417) und wurde gegen 
 
 ### Qualität vor dem Launch
 - Mit mehreren echten Auszügen (verschiedene Banken) und in mehreren Kantonen testen, inkl. des Imports in die jeweilige Steuersoftware.
-- Bekannte Grenzen dokumentieren: Kapitalmassnahmen, rekonstruierte Anfangsbestände, Fremdwährungen, PDF‑Auszüge anderer Banken (nur CSV oder manuelle Erfassung).
+- Bekannte Grenzen dokumentieren: Kapitalmassnahmen, rekonstruierte Anfangsbestände, Fremdwährungen, PDF‑Auszüge anderer Banken (nur CSV oder manuelle Erfassung), Revolut‑Dividenden (15 % US‑Quellensteuer angenommen), IBKR‑Optionen/Futures/Anleihen (nicht unterstützt).
 - Support‑Kanal und Versionsangabe.
 
 ## 3. Platzhalter in den Rechtstexten

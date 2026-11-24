@@ -195,12 +195,13 @@
       const events = inst.movements.concat(inst.corp)
         .sort((a, b) => (a.dateKey - b.dateKey) || (b.row - a.row));
       let running = 0, minRun = 0;
-      for (const e of events) { running += e.qty; if (running < minRun) minRun = running; }
+      // Round to 1e-8: fractional shares (e.g. Revolut) leave floating-point dust.
+      for (const e of events) { running = Math.round((running + e.qty) * 1e8) / 1e8; if (running < minRun) minRun = running; }
       if (inst.openingFixed != null) {
         inst.openingQty = inst.openingFixed;
         inst.openingInferred = false;
       } else if (inst.closingFixed != null) {
-        inst.openingQty = inst.closingFixed - running;
+        inst.openingQty = Math.round((inst.closingFixed - running) * 1e8) / 1e8;
         inst.openingInferred = false;
         if (inst.openingQty < 0) {
           warnings.push(`${inst.name}: Bestand 31.12. passt nicht zu den Transaktionen (Anfangsbestand wäre negativ).`);
@@ -210,7 +211,7 @@
         inst.openingQty = minRun < 0 ? -minRun : 0;
         inst.openingInferred = inst.openingQty > 0;
       }
-      inst.closingQty = inst.openingQty + running;
+      inst.closingQty = Math.round((inst.openingQty + running) * 1e8) / 1e8;
     }
     return { instruments: Array.from(instruments.values()), cashInterest, warnings };
   }

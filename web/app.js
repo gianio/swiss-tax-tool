@@ -14,7 +14,7 @@ const CANTONS = {
 const DEFAULT_FX = { USD: "0.80", EUR: "0.93", CAD: "0.58", DKK: "0.125", GBP: "1.08", SEK: "0.083", NOK: "0.080", JPY: "0.0055", XAU: "3400" };
 
 let txns = null, cashBalances = [], account = {}, currencies = [], sourceLabel = "";
-let importSkipped = [];
+let importSkipped = [], importWarnings = [];
 let table = null;
 let lastXml = null, lastCfg = null;
 
@@ -42,7 +42,8 @@ function showErr(id, msg) { const el = $(id); el.textContent = msg; el.hidden = 
 function resetAfterSource() {
   ["mapCard", "manualCard", "formCard", "resultCard"].forEach((id) => ($(id).hidden = true));
   $("dashboardHost").innerHTML = "";
-  lastXml = null; cashBalances = []; account = {}; importSkipped = []; txns = null;
+  lastXml = null; cashBalances = []; account = {}; importSkipped = []; importWarnings = []; txns = null; reparse = null;
+  if (!$("f_institution").dataset.touched) $("f_institution").value = "Musterbank AG";
 }
 
 // ---- step 1: file ------------------------------------------------------------
@@ -54,6 +55,21 @@ dz.addEventListener("dragleave", () => dz.classList.remove("drag"));
 dz.addEventListener("drop", (e) => { e.preventDefault(); dz.classList.remove("drag"); if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
 fi.addEventListener("change", () => { if (fi.files[0]) loadFile(fi.files[0]); fi.value = ""; });
 
+// reparse(year) is set for imports whose content depends on the tax year
+// (Revolut CSV may span several years).
+let reparse = null;
+function useBroker(r, label, again) {
+  reparse = again || null;
+  txns = r.transactions; cashBalances = r.balances; account = r.account;
+  importWarnings = r.warnings || [];
+  sourceLabel = label;
+  $("parseStatus").textContent = `✓ ${label}: ${txns.length} Transaktionen, ${cashBalances.length} Kontostände` +
+    (importWarnings.length ? ` · ${importWarnings.length} Hinweis${importWarnings.length > 1 ? "e" : ""}` : "");
+  goToForm();
+  if (r.year) $("f_year").value = String(r.year);
+  if (r.institution && !$("f_institution").dataset.touched) $("f_institution").value = r.institution;
+}
+
 async function loadFile(file) {
   showErr("err", ""); resetAfterSource();
   $("parseStatus").textContent = "Verarbeite lokal …";
@@ -62,10 +78,16 @@ async function loadFile(file) {
     const buf = await file.arrayBuffer();
     const head = new Uint8Array(buf.slice(0, 5)).reduce((s, b) => s + String.fromCharCode(b), "");
     if (head === "%PDF-" || /\.pdf$/i.test(file.name)) {
+      // Broker statements with their own layout first (each returns null if
+      // the PDF is not theirs); pdf.js detaches the buffer, so pass copies.
+      for (const [mod, label] of [[SQIbkr, "Interactive Brokers – Activity Statement (PDF)"], [SQRevolut, "Revolut – Account Statement (PDF)"]]) {
+        const r = await mod.parsePdf(buf.slice(0), pdfjsLib);
+        if (r) return useBroker(r, label);
+      }
       let k;
-      try { k = await SQPdf.parseKontoauszug(buf, pdfjsLib); }
+      try { k = await SQPdf.parseKontoauszug(buf.slice(0), pdfjsLib); }
       catch (e) {
-        throw new Error(e.message + " – Automatisch gelesen werden Swissquote‑Kontoauszüge. Für andere Banken laden Sie bitte den CSV‑Export aus dem E‑Banking hoch oder erfassen die Werte manuell.");
+        throw new Error(e.message + " – Automatisch gelesen werden PDF‑Auszüge von Swissquote, Interactive Brokers und Revolut. Für andere Banken laden Sie bitte den CSV‑Export aus dem E‑Banking hoch oder erfassen die Werte manuell.");
       }
       txns = k.transactions; cashBalances = k.balances; account = k.account;
       sourceLabel = "Swissquote‑Kontoauszug (PDF)";
@@ -73,6 +95,11 @@ async function loadFile(file) {
       return goToForm();
     }
     const text = SQImport.decodeBytes(buf);
+    if (SQIbkr.isIbkrCsv(text)) return useBroker(SQIbkr.parseCsv(text), "Interactive Brokers – Activity Statement (CSV)");
+    if (SQRevolut.isRevolutCsv(text)) {
+      const again = (year) => SQRevolut.parseCsv(text, year ? { year } : {});
+      return useBroker(again(), "Revolut – Trading‑Export (CSV)", again);
+    }
     table = SQImport.readTable(text);
     if (SQImport.isSwissquote(table.header)) {
       txns = SQCore.parseCsv(text);
@@ -306,6 +333,12 @@ function collectCarry() {
 }
 
 // ---- generate --------------------------------------------------------------------
+$("f_year").addEventListener("change", () => {
+  if (!reparse) return;
+  const r = reparse(Number($("f_year").value));
+  txns = r.transactions; cashBalances = r.balances; importWarnings = r.warnings || [];
+});
+
 $("genBtn").addEventListener("click", () => {
   try {
     const cfg = collectCfg();
@@ -321,7 +354,7 @@ $("genBtn").addEventListener("click", () => {
       ? `<span class="badge ok"><span class="mi mi-check-circle"></span>eCH‑0196 v2.2 · Kanton ${esc(cfg.canton)} · ${esc(cfg.taxYear)}</span>`
       : '<span class="badge bad">✗ XML‑Fehler</span>')
       + (out.carriedCount ? ` <span class="badge ok"><span class="mi mi-history"></span>${out.carriedCount} aus Vorjahr weitergeführt</span>` : "");
-    const warns = res.warnings.concat(importSkipped.filter((s) => s.reason !== "ignoriert").map((s) => `Zeile ${s.line}: ${s.reason}`));
+    const warns = importWarnings.concat(res.warnings).concat(importSkipped.filter((s) => s.reason !== "ignoriert").map((s) => `Zeile ${s.line}: ${s.reason}`));
     $("warnHost").innerHTML = warns.length
       ? `<details class="fold"><summary><span class="mi mi-warning"></span>${warns.length} Hinweis${warns.length > 1 ? "e" : ""} zur Datenqualität</summary><ul class="muted-note">${warns.slice(0, 40).map((w) => `<li>${esc(w)}</li>`).join("")}</ul></details>` : "";
     $("priceNote").textContent = SQPay.isLocked()
