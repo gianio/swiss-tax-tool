@@ -33,8 +33,12 @@ window.APP_CONFIG = {
   // any tax data.
   //
   // Preview the payment dialog without charging: open index.html?paywall=demo
+  // soft: true shows the payment dialog only for the barcode PDF and lets
+  // users continue for free ("Testphase"). For the real paywall set
+  // enabled: true (overrides soft).
   paywall: {
     enabled: false,
+    soft: true,
     priceChf: "9.90",
     checkoutUrl: { twint: "", card: "" },
     verifyUrl: "",

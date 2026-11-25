@@ -1,9 +1,14 @@
 /*
  * Download paywall (TWINT / credit card) — switched off by default.
  *
- * Configured in config.js (APP_CONFIG.paywall). While `enabled` is false,
- * SQPay.requireUnlock() resolves immediately and nothing is shown.
- * `index.html?paywall=demo` shows the dialog with a simulated payment.
+ * Configured in config.js (APP_CONFIG.paywall):
+ *   enabled: true  -> hard gate: XML and PDF need a payment, preview masked.
+ *   soft: true     -> soft gate (test phase): the payment dialog appears only
+ *                     for the barcode PDF and can be skipped with
+ *                     "Kostenlos weiter". Nothing is masked.
+ *   both false     -> no dialog at all.
+ * `index.html?paywall=demo` shows the hard dialog with a simulated payment,
+ * `index.html?paywall=soft` forces the soft gate.
  *
  * Real flow (when enabled): the provider checkout opens in a NEW window so the
  * statement — which only exists in this tab's memory — is not lost. The
@@ -19,9 +24,16 @@
   "use strict";
   const cfg = (root.APP_CONFIG && root.APP_CONFIG.paywall) || { enabled: false };
   const demo = /[?&]paywall=demo\b/.test(location.search);
-  let unlocked = false;
+  const soft = !cfg.enabled && !demo && (cfg.soft || /[?&]paywall=soft\b/.test(location.search));
+  let unlocked = false, skipped = false;
 
+  // Hard gate (masks preview, blocks XML + PDF).
   function active() { return !unlocked && (cfg.enabled || demo); }
+  // Does this download need the dialog? kind: "xml" | "pdf"
+  function gated(kind) {
+    if (active()) return true;
+    return soft && !unlocked && !skipped && kind === "pdf";
+  }
 
   function randomRef() {
     const b = new Uint8Array(12);
@@ -35,10 +47,11 @@
     return t.content.firstElementChild;
   }
 
-  function requireUnlock() {
-    if (!active()) return Promise.resolve(true);
+  function requireUnlock(kind) {
+    if (!gated(kind || "pdf")) return Promise.resolve(true);
     return new Promise((resolve) => {
-      const configured = demo || (cfg.checkoutUrl && (cfg.checkoutUrl.twint || cfg.checkoutUrl.card) && cfg.verifyUrl);
+      const live = !!(cfg.checkoutUrl && (cfg.checkoutUrl.twint || cfg.checkoutUrl.card) && cfg.verifyUrl);
+      const configured = demo || live || soft;
       const price = cfg.priceChf || "9.90";
       const ov = el(`
         <div class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="payTitle">
@@ -46,6 +59,7 @@
             <h2 id="payTitle">Steuerauszug herunterladen</h2>
             <p class="hint" style="margin-top:4px">Einmalig <strong>CHF ${price}</strong> für dieses Steuerjahr – XML und PDF mit Barcode.</p>
             ${demo ? '<div class="banner warn" style="margin:10px 0"><span class="ico mi mi-info"></span><div><strong>Demo-Modus:</strong> es wird keine echte Zahlung ausgelöst.</div></div>' : ""}
+            ${soft ? '<div class="banner info" style="margin:10px 0"><span class="ico mi mi-info"></span><div><strong>Testphase:</strong> Der Download ist im Moment noch kostenlos. Sie können ohne Zahlung weiterfahren.</div></div>' : ""}
             <ul class="checklist">
               <li>eCH‑0196‑Steuerauszug (XML) für den Import in Ihre kantonale Steuersoftware</li>
               <li>PDF mit Barcode (macro PDF417) zum Scannen</li>
@@ -58,7 +72,7 @@
                 <span class="pm-logo">VISA · MC</span><span>Mit Kreditkarte bezahlen</span></button>
             </div>
             <div class="pay-status muted-note" aria-live="polite">${configured ? "" : "Die Zahlung ist noch nicht verfügbar."}</div>
-            <div class="actions" style="justify-content:flex-end"><button class="btn ghost" type="button" data-x>Abbrechen</button></div>
+            <div class="actions" style="justify-content:flex-end"><button class="btn ghost" type="button" data-x>Abbrechen</button>${soft ? '<button class="btn primary" type="button" data-skip>Kostenlos weiter<span class="mi mi-arrow"></span></button>' : ""}</div>
           </div>
         </div>`);
       document.body.appendChild(ov);
@@ -70,11 +84,18 @@
         resolve(ok);
       };
       ov.querySelector("[data-x]").addEventListener("click", () => close(false));
+      const skipBtn = ov.querySelector("[data-skip]");
+      if (skipBtn) skipBtn.addEventListener("click", () => { skipped = true; close(true); });
       ov.addEventListener("keydown", (e) => { if (e.key === "Escape") close(false); });
 
       ov.querySelectorAll(".pay-btn").forEach((btn) => btn.addEventListener("click", () => {
         const method = btn.dataset.m;
         ov.querySelectorAll(".pay-btn").forEach((b) => (b.disabled = true));
+        if (soft && !live) {
+          status.textContent = "Die Zahlung ist in der Testphase noch nicht aktiv – der Download ist kostenlos.";
+          setTimeout(() => { skipped = true; close(true); }, 1400);
+          return;
+        }
         if (demo) {
           status.textContent = `Simuliere ${method === "twint" ? "TWINT" : "Kreditkarten"}-Zahlung …`;
           setTimeout(() => { unlocked = true; status.textContent = "✓ Bezahlt (Demo)"; setTimeout(() => close(true), 500); }, 900);
@@ -100,9 +121,9 @@
         };
         window.addEventListener("message", onMsg);
       }));
-      ov.querySelector(".pay-btn:not([disabled])")?.focus();
+      (ov.querySelector("[data-skip]") || ov.querySelector(".pay-btn:not([disabled])"))?.focus();
     });
   }
 
-  root.SQPay = { requireUnlock, isLocked: active, priceChf: cfg.priceChf || "9.90" };
+  root.SQPay = { requireUnlock, isLocked: active, isSoft: () => soft && !unlocked, priceChf: cfg.priceChf || "9.90" };
 })(typeof self !== "undefined" ? self : this);

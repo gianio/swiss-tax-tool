@@ -6,8 +6,11 @@ name: Deploy web app to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["web/**", "sample_data/**", ".github/workflows/pages.yml"]
+    paths: ["web/**", "sample_data/**", "scripts/update_fx_rates.py", ".github/workflows/pages.yml"]
   workflow_dispatch:
+  # Monthly redeploy so new SNB rates (e.g. the 31.12. rate in January) land automatically.
+  schedule:
+    - cron: "17 6 5 * *"
 
 permissions:
   contents: read
@@ -37,6 +40,10 @@ jobs:
           node web/cli.js sample_data/sample_generic_bank.csv 2025 BE | grep -q 'isin="CH0038863350"'
           node web/cli.js sample_data/sample_ibkr_activity.csv 2025 ZH | grep -q 'isin="US0378331005"'
           node web/cli.js sample_data/sample_revolut_trading.csv 2025 ZH | grep -q "<taxStatement"
+
+      - name: Refresh exchange rates (SNB data portal)
+        # Keeps the committed web/fx-rates.js if the SNB is not reachable.
+        run: python3 scripts/update_fx_rates.py || echo "::warning::SNB nicht erreichbar – eingecheckte Kurse werden verwendet"
 
       - name: Build site
         run: |

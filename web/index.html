@@ -49,16 +49,39 @@
       <div><strong>Inoffizielles Hilfsmittel, keine Steuerberatung.</strong> Kein Angebot einer Bank, eines Softwareherstellers oder einer Steuerverwaltung. Angaben ohne Gewähr – prüfen Sie den Steuerauszug vor dem Einreichen. <a href="haftungsausschluss.html">Haftungsausschluss</a></div>
     </div>
 
+    <section class="howto" aria-labelledby="howtoTitle">
+      <div class="howto-head">
+        <h2 id="howtoTitle">In rund 2 Minuten zum Steuerauszug</h2>
+        <div class="howto-sub">Ca. 4 Klicks · keine Registrierung · nichts installieren</div>
+      </div>
+      <ol class="howto-steps">
+        <li><span class="n">1</span><div><div class="hs-t">Auszug hochladen</div><div class="hs-m"><span class="mi mi-upload"></span>1 Klick · ca. 10 Sek.</div><div class="hs-d">PDF oder CSV Ihrer Bank, wird automatisch erkannt.</div></div></li>
+        <li><span class="n">2</span><div><div class="hs-t">Name &amp; Kanton</div><div class="hs-m"><span class="mi mi-edit"></span>2 Felder · ca. 30 Sek.</div><div class="hs-d">Jahr, Bank und Umrechnungskurse sind schon ausgefüllt.</div></div></li>
+        <li><span class="n">3</span><div><div class="hs-t">Erstellen &amp; herunterladen</div><div class="hs-m"><span class="mi mi-download"></span>2 Klicks · ca. 15 Sek.</div><div class="hs-d">Vorschau prüfen, dann PDF mit Barcode oder XML speichern.</div></div></li>
+        <li><span class="n">4</span><div><div class="hs-t">In die Steuersoftware</div><div class="hs-m"><span class="mi mi-history"></span>ca. 1 Min.</div><div class="hs-d">Im Wertschriftenverzeichnis den E‑Steuerauszug importieren bzw. den Barcode einlesen.</div></div></li>
+      </ol>
+      <details class="fold howto-banks">
+        <summary><span class="mi mi-info"></span>Wo finde ich meinen Auszug?</summary>
+        <ul class="bank-help">
+          <li><strong>Interactive Brokers:</strong> Client Portal → Performance &amp; Berichte → Kontoauszüge → <em>Aktivität</em> (Activity Statement), Zeitraum <em>Jährlich</em> / 01.01.–31.12., Format PDF oder CSV.</li>
+          <li><strong>Revolut:</strong> App → Investieren → Dokumente → <em>Kontoauszug</em> (Account Statement) für das Steuerjahr als PDF. Der CSV‑Export geht auch, enthält aber keine Gebühren und ISIN.</li>
+          <li><strong>Swissquote:</strong> Kontoauszug des ganzen Jahres als PDF oder die Transaktionsliste als CSV exportieren.</li>
+          <li><strong>Andere Banken:</strong> Im E‑Banking unter Transaktionen/Bewegungen den Zeitraum 01.01.–31.12. als CSV exportieren. Ohne Export: <em>Manuell erfassen</em>.</li>
+        </ul>
+        <p class="muted-note">Menünamen können je nach App‑Version leicht abweichen. Wichtig ist ein Auszug für das <strong>ganze Steuerjahr</strong> (1.1.–31.12.).</p>
+      </details>
+    </section>
+
     <ol class="stepper" id="stepper" aria-label="Fortschritt">
-      <li data-step="1" class="active"><span class="n">1</span> Einlesen</li>
-      <li data-step="2"><span class="n">2</span> Prüfen</li>
-      <li data-step="3"><span class="n">3</span> Angaben</li>
-      <li data-step="4"><span class="n">4</span> Vorschau &amp; Download</li>
+      <li data-step="1" class="active"><span class="n">1</span> Einlesen <span class="st-time">10 s</span></li>
+      <li data-step="2"><span class="n">2</span> Prüfen <span class="st-time">nur bei CSV</span></li>
+      <li data-step="3"><span class="n">3</span> Angaben <span class="st-time">30 s</span></li>
+      <li data-step="4"><span class="n">4</span> Vorschau &amp; Download <span class="st-time">15 s</span></li>
     </ol>
 
     <!-- STEP 1 -->
     <section class="card" id="srcCard">
-      <h2>1. Kontoauszug einlesen</h2>
+      <h2>1. Kontoauszug einlesen <span class="step-meta">1 Klick · ca. 10 Sek.</span></h2>
       <div class="source-grid">
         <div class="source"><span class="mi mi-receipt"></span><div><div class="src-t">Swissquote · Interactive Brokers · Revolut</div><div class="src-d">PDF‑Auszug oder CSV‑Export – wird automatisch erkannt.</div></div></div>
         <div class="source"><span class="mi mi-upload"></span><div><div class="src-t">Jede andere Bank</div><div class="src-d">CSV/TXT‑Export aus dem E‑Banking – Spalten werden erkannt und lassen sich zuordnen.</div></div></div>
@@ -119,7 +142,8 @@
 
     <!-- STEP 3 -->
     <section class="card" id="formCard" hidden>
-      <h2>3. Angaben zum Steuerauszug</h2>
+      <h2>3. Angaben zum Steuerauszug <span class="step-meta">ca. 30 Sek.</span></h2>
+      <div class="banner ok-banner" style="margin-bottom:12px"><span class="ico mi mi-check-circle"></span><div>Nötig sind nur <strong>Vorname, Nachname und Wohnkanton</strong>. Steuerjahr, Bank und Umrechnungskurse sind bereits ausgefüllt, die aufklappbaren Abschnitte sind optional.</div></div>
       <div class="subhead">Steuerpflichtige Person</div>
       <div class="grid3">
         <div class="field"><label for="f_first">Vorname <span class="req">*</span></label><input id="f_first" autocomplete="off"></div>
@@ -159,7 +183,7 @@
 
       <details class="fold" id="fxFold">
         <summary>Umrechnungskurse in CHF <span class="desc" id="fxSummary"></span></summary>
-        <p class="hint">Für Erträge in Fremdwährung. Bitte mit der ESTV‑Kursliste (Devisenkurse per 31.12.) abgleichen.</p>
+        <p class="hint" id="fxNote"></p>
         <div class="grid3" id="fxGrid"></div>
       </details>
 
@@ -172,7 +196,7 @@
     <!-- STEP 4 -->
     <section class="card" id="resultCard" hidden>
       <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
-        <div><h2 style="margin-bottom:6px">4. Vorschau &amp; Download</h2><div id="badge"></div></div>
+        <div><h2 style="margin-bottom:6px">4. Vorschau &amp; Download <span class="step-meta">1 Klick</span></h2><div id="badge"></div></div>
         <div class="actions" style="margin-top:0">
           <button class="btn ghost" id="dlBtn" type="button"><span class="mi mi-download"></span>XML</button>
           <button class="btn primary" id="dlPdfBtn" type="button"><span class="mi mi-download"></span>PDF mit Barcode</button>
@@ -182,7 +206,15 @@
       <div id="pdfStatus" class="muted-note" style="margin-top:4px"></div>
       <div id="warnHost"></div>
       <div id="previewHost"></div>
-      <div class="banner info" style="margin-top:12px"><span class="ico mi mi-info"></span><div>Importieren Sie die <strong>XML</strong> oder das <strong>PDF mit Barcode</strong> in Ihre kantonale Steuersoftware (eCH‑0196‑Import, z.&nbsp;B. SofTax). Der Auszug ist selbst erstellt und <strong>nicht bank‑signiert</strong>; Steuerwerte ergänzt die Software aus der offiziellen Kursliste.</div></div>
+      <div class="next-steps">
+        <div class="ns-title"><span class="mi mi-arrow"></span>So geht es weiter (ca. 1 Minute)</div>
+        <ol>
+          <li><strong>PDF mit Barcode</strong> speichern (für die meisten Kantone das Einfachste) oder die <strong>XML</strong>.</li>
+          <li>Steuersoftware öffnen (z.&nbsp;B. SofTax), Wertschriftenverzeichnis → <em>E‑Steuerauszug importieren</em> bzw. Barcode einlesen.</li>
+          <li>Übernommene Titel kurz kontrollieren. Steuerwerte ergänzt die Software aus der offiziellen ESTV‑Kursliste.</li>
+        </ol>
+        <p class="muted-note">Der Auszug ist selbst erstellt und <strong>nicht bank‑signiert</strong>.</p>
+      </div>
     </section>
 
     <div id="dashboardHost"></div>
@@ -200,6 +232,7 @@
   <script src="pdfparse.js"></script>
   <script src="carryforward.js"></script>
   <script src="barcode.js"></script>
+  <script src="fx-rates.js"></script>
   <script src="core.js"></script>
   <script src="importers.js"></script>
   <script src="ibkr.js"></script>

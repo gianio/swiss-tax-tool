@@ -126,3 +126,31 @@ def test_revolut_pdf_lines():
     assert by[("Bestand 31.12.", "KO")]["quantity"] == 10
     assert by[("Dividende", "KO")]["costs"] == 0.74 and by[("Dividende", "KO")]["net"] == 4.17
     assert not any("Endbestand" in w or "nicht erkannt" in w for w in res["warnings"])
+
+
+def test_fx_rates_bundle_and_monthly_rates():
+    out = json.loads(_node("""
+      const F=require('./web/fx-rates.js'), C=require('./web/core.js');
+      const t=[{row:1,dateKey:20250315,date:'2025-03-15',type:'Dividende',symbol:'X',name:'X Corp',isin:'US0378331005',
+        quantity:null,unitPrice:null,costs:15,net:85,currency:'USD'}];
+      const res=C.classify(t,'CH');
+      const xml=C.buildXml(res,{taxYear:2025,canton:'ZH',clientNumber:'1',fxRates:{USD:0.8},fxMonthly:{USD:{'2025-03':0.9}}}).xml;
+      console.log(JSON.stringify({ye:F.yearEnd['2025'], src:F.source, xml}));"""))
+    assert out["src"].startswith("Schweizerische Nationalbank")
+    assert 0.5 < out["ye"]["USD"] < 1.5 and 0.5 < out["ye"]["EUR"] < 1.5
+    # The dividend uses the March rate (0.9), not the year-end rate (0.8).
+    assert 'exchangeRate="0.9"' in out["xml"] and 'grossRevenueB="90"' in out["xml"]
+
+
+def test_performance_average_cost():
+    out = json.loads(_node("""
+      const C=require('./web/core.js');
+      const mk=(row,date,type,q,p,net,costs)=>({row,dateKey:+date.replace(/-/g,''),date,type,symbol:'ABC',name:'ABC',
+        isin:'US0378331005',quantity:q,unitPrice:p,costs,net,currency:'CHF'});
+      const t=[mk(3,'2025-01-10','Kauf',10,100,-1001,1), mk(2,'2025-02-10','Kauf',10,120,-1201,1),
+               mk(1,'2025-06-10','Verkauf',5,150,749,1)];
+      const res=C.classify(t,'CH');
+      console.log(JSON.stringify(C.summarize(res,{taxYear:2025,fxRates:{CHF:1}},[]).performance));"""))
+    # avg cost 110 -> 5 * (150 - 110) = 200, minus 3 fees; 15 left at last price 150: 15*150 - 1650 = 600
+    assert round(out["realizedChf"], 6) == 197 and round(out["unrealizedChf"], 6) == 600
+    assert out["feesChf"] == 3 and out["incomplete"] is False
